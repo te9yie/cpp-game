@@ -26,12 +26,18 @@ file(GLOB IMGUI_BACKENDS
     ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl*.cpp)
 source_group(imgui FILES ${IMGUI_SOURCES} ${IMGUI_BACKENDS})
 
-file(GLOB_RECURSE SOURCES
+file(GLOB SOURCES
 	${PROJECT_SOURCE_DIR}/src/*.h
 	${PROJECT_SOURCE_DIR}/src/*.cpp)
 
+file(GLOB T9_SOURCES
+	${PROJECT_SOURCE_DIR}/src/t9/*.h
+	${PROJECT_SOURCE_DIR}/src/t9/*.cpp)
+source_group(t9 FILES ${T9_SOURCES})
+
 add_executable(${PROJECT_NAME} WIN32
     ${SOURCES}
+    ${T9_SOURCES}
     ${IMGUI_SOURCES} ${IMGUI_BACKENDS})
 target_compile_options(${PROJECT_NAME} PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W4>
