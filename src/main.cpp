@@ -53,8 +53,12 @@ int main(int /*argc*/, char* /*argv*/[]) {
   ImGui_ImplSDL2_InitForSDLRenderer(window.get(), renderer.get());
   ImGui_ImplSDLRenderer_Init(renderer.get());
 
+  Uint64 last_start_time = 0;
+
   bool loop = true;
   while (loop) {
+    auto start_time = SDL_GetPerformanceCounter();
+
     {
       SDL_Event e;
       while (SDL_PollEvent(&e)) {
@@ -75,12 +79,23 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
     ImGui::ShowDemoWindow();
 
+    ImGui::Begin("Debug");
+    {
+      auto delta = start_time - last_start_time;
+      auto delta_ms = delta * 1000 / SDL_GetPerformanceFrequency();
+      ImGui::Text("delta (count): %lu", delta);
+      ImGui::Text("delta (ms): %lu", delta_ms);
+    }
+    ImGui::End();
+
     ImGui::Render();
 
     SDL_SetRenderDrawColor(renderer.get(), 0x12, 0x34, 0x56, 0xff);
     SDL_RenderClear(renderer.get());
     ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
     SDL_RenderPresent(renderer.get());
+
+    last_start_time = start_time;
   }
 
   ImGui_ImplSDLRenderer_Shutdown();
