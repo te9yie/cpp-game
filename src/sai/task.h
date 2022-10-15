@@ -48,7 +48,7 @@ class Task : private t9::NonCopyable {
     Done,
   };
 
-  enum { FLAG_FENCE, FLAG_MAIN_THREAD, FLAG_MAX };
+  enum { FLAG_FENCE, FLAG_MAX };
 
  private:
   TaskArgsPermission args_permission_;
@@ -61,6 +61,8 @@ class Task : private t9::NonCopyable {
   explicit Task(const TaskArgsPermission& permission);
   virtual ~Task() = default;
 
+  void set_fence() { flags_.set(FLAG_FENCE); }
+
   void exec(const TaskContext& ctx);
 
   const TaskArgsPermission& args_permission() const { return args_permission_; }
@@ -69,13 +71,10 @@ class Task : private t9::NonCopyable {
   bool is_wait_done() const { return state_ == State::WaitDone; }
   bool is_done() const { return state_ == State::Done; }
   bool is_fence() const { return flags_.test(FLAG_FENCE); }
-  bool is_main_thread() const { return flags_.test(FLAG_MAIN_THREAD); }
 
   bool reset_state();
   bool set_submit();
   bool set_done();
-  void set_fence() { flags_.set(FLAG_FENCE); }
-  void set_main_thread() { flags_.set(FLAG_MAIN_THREAD); }
 
   void set_observer(TaskObserver* observer) { observer_ = observer; }
   void add_dependency(Task* task);
