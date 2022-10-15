@@ -6,7 +6,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_sdlrenderer.h"
-#include "sai/job.h"
+#include "sai/task.h"
 
 namespace {
 
@@ -20,6 +20,54 @@ struct DestroyRenderer {
 };
 using RendererPtr = std::unique_ptr<SDL_Renderer, DestroyRenderer>;
 
+struct Frame {
+  Uint64 last_start_count = 0;
+  Uint64 start_count = 0;
+  Uint64 frame_count = 0;
+};
+
+void start_frame(Frame* frame) {
+  frame->start_count = SDL_GetPerformanceCounter();
+}
+void end_frame(Frame* frame) {
+  frame->last_start_count = frame->start_count;
+  ++frame->frame_count;
+}
+
+struct DebugGui {};
+
+void start_imgui(DebugGui*) {
+  ImGui_ImplSDLRenderer_NewFrame();
+  ImGui_ImplSDL2_NewFrame();
+  ImGui::NewFrame();
+}
+void end_imgui(DebugGui*) { ImGui::Render(); }
+void render_imgui(DebugGui*) {
+  ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
+}
+
+void draw_frame_info(const Frame* frame, DebugGui*) {
+  ImGui::Begin("Debug");
+  {
+    auto delta = frame->start_count - frame->last_start_count;
+    auto delta_ms = delta * 1000 / SDL_GetPerformanceFrequency();
+    ImGui::Text("delta (count): %lu", delta);
+    ImGui::Text("delta (ms): %lu", delta_ms);
+    ImGui::Text("frame count: %lu", frame->frame_count);
+
+    auto canvas_p0 = ImGui::GetCursorScreenPos();
+    auto canvas_s = ImGui::GetContentRegionAvail();
+    if (canvas_s.x < 50.0f) canvas_s.x = 50.0f;
+    if (canvas_s.y < 50.0f) canvas_s.y = 50.0f;
+    auto canvas_p1 = ImVec2(canvas_p0.x + canvas_s.x, canvas_p0.y + canvas_s.y);
+
+    auto draw = ImGui::GetWindowDrawList();
+    draw->AddRectFilled(canvas_p0, canvas_p1, IM_COL32(0x30, 0x30, 0x30, 0xff));
+    draw->AddRect(canvas_p0, canvas_p1, IM_COL32(0xff, 0xff, 0xff, 0xff));
+  }
+  ImGui::End();
+}
+
 }  // namespace
 
 int main(int /*argc*/, char* /*argv*/[]) {
@@ -32,6 +80,9 @@ int main(int /*argc*/, char* /*argv*/[]) {
     return EXIT_FAILURE;
   }
   atexit(SDL_Quit);
+
+  sai::TaskExecutor tasks("TaskExecutor");
+  if (!tasks.setup(2)) return false;
 
   WindowPtr window(SDL_CreateWindow(TITLE, SDL_WINDOWPOS_UNDEFINED,
                                     SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH,
@@ -54,15 +105,38 @@ int main(int /*argc*/, char* /*argv*/[]) {
   ImGui_ImplSDL2_InitForSDLRenderer(window.get(), renderer.get());
   ImGui_ImplSDLRenderer_Init(renderer.get());
 
-  sai::JobExecutor executor("Task");
-  executor.start(2);
+  {  // setup context.
+    tasks.add_context<DebugGui>();
+    tasks.add_context<Frame>();
+  }
 
-  Uint64 last_start_time = 0;
+  {  // setup task.
+    auto fence = sai::TaskOption().set_fence();
+
+    tasks.add_task(start_frame, fence);
+    tasks.add_task(start_imgui, fence);
+
+    {  // update.
+      tasks.add_task([](DebugGui*) { ImGui::ShowDemoWindow(); });
+      tasks.add_task(draw_frame_info);
+    }
+
+    tasks.add_task(end_imgui, fence);
+
+    // render.
+    tasks.add_task(
+        [&]() {
+          SDL_SetRenderDrawColor(renderer.get(), 0x12, 0x34, 0x56, 0xff);
+          SDL_RenderClear(renderer.get());
+        },
+        fence);
+    tasks.add_task(render_imgui, fence);
+    tasks.add_task([&]() { SDL_RenderPresent(renderer.get()); }, fence);
+    tasks.add_task(end_frame);
+  }
 
   bool loop = true;
   while (loop) {
-    auto start_time = SDL_GetPerformanceCounter();
-
     {
       SDL_Event e;
       while (SDL_PollEvent(&e)) {
@@ -77,45 +151,7 @@ int main(int /*argc*/, char* /*argv*/[]) {
         }
       }
     }
-    ImGui_ImplSDLRenderer_NewFrame();
-    ImGui_ImplSDL2_NewFrame();
-    ImGui::NewFrame();
-
-    ImGui::ShowDemoWindow();
-
-    ImGui::Begin("Debug");
-    {
-      if (ImGui::Button("Hello")) {
-        executor.submit_func(
-            []() { SDL_Log("Hello %u", SDL_GetThreadID(nullptr)); });
-      }
-      auto delta = start_time - last_start_time;
-      auto delta_ms = delta * 1000 / SDL_GetPerformanceFrequency();
-      ImGui::Text("delta (count): %lu", delta);
-      ImGui::Text("delta (ms): %lu", delta_ms);
-
-      auto canvas_p0 = ImGui::GetCursorScreenPos();
-      auto canvas_s = ImGui::GetContentRegionAvail();
-      if (canvas_s.x < 50.0f) canvas_s.x = 50.0f;
-      if (canvas_s.y < 50.0f) canvas_s.y = 50.0f;
-      auto canvas_p1 =
-          ImVec2(canvas_p0.x + canvas_s.x, canvas_p0.y + canvas_s.y);
-
-      auto draw = ImGui::GetWindowDrawList();
-      draw->AddRectFilled(canvas_p0, canvas_p1,
-                          IM_COL32(0x30, 0x30, 0x30, 0xff));
-      draw->AddRect(canvas_p0, canvas_p1, IM_COL32(0xff, 0xff, 0xff, 0xff));
-    }
-    ImGui::End();
-
-    ImGui::Render();
-
-    SDL_SetRenderDrawColor(renderer.get(), 0x12, 0x34, 0x56, 0xff);
-    SDL_RenderClear(renderer.get());
-    ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
-    SDL_RenderPresent(renderer.get());
-
-    last_start_time = start_time;
+    tasks.run();
   }
 
   ImGui_ImplSDLRenderer_Shutdown();
