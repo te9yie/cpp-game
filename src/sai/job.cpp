@@ -1,6 +1,7 @@
 #include "job.h"
 
 #include <algorithm>
+#include <cstdio>
 
 namespace sai {
 
@@ -28,7 +29,7 @@ bool JobExecutor::start(std::size_t thread_n) {
   threads_.reserve(thread_n);
   for (std::size_t i = 0; i < thread_n; ++i) {
     char buf[128];
-    SDL_snprintf(buf, sizeof(buf), "%s_%zu", name_.c_str(), i);
+    std::snprintf(buf, sizeof(buf), "%s_%zu", name_.c_str(), i);
     auto thread = SDL_CreateThread(JobExecutor::thread_func_, buf, this);
     if (!thread) {
       SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "[JobExecutor::start] %s",
