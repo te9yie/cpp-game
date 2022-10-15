@@ -5,6 +5,7 @@
 #include <functional>
 #include <list>
 #include <memory>
+#include <string>
 #include <string_view>
 
 #include "config.h"
@@ -51,6 +52,7 @@ class Task : private t9::NonCopyable {
   enum { FLAG_FENCE, FLAG_MAX };
 
  private:
+  std::string name_;
   TaskArgsPermission args_permission_;
   State state_ = State::None;
   std::bitset<FLAG_MAX> flags_;
@@ -58,7 +60,7 @@ class Task : private t9::NonCopyable {
   std::deque<Task*> dependencies_;
 
  public:
-  explicit Task(const TaskArgsPermission& permission);
+  Task(std::string_view name, const TaskArgsPermission& permission);
   virtual ~Task() = default;
 
   void set_fence() { flags_.set(FLAG_FENCE); }
@@ -67,6 +69,7 @@ class Task : private t9::NonCopyable {
 
   const TaskArgsPermission& args_permission() const { return args_permission_; }
 
+  const std::string& name() const { return name_; }
   bool can_exec() const;
   bool is_wait_done() const { return state_ == State::WaitDone; }
   bool is_done() const { return state_ == State::Done; }
@@ -77,7 +80,9 @@ class Task : private t9::NonCopyable {
   bool set_done();
 
   void set_observer(TaskObserver* observer) { observer_ = observer; }
+
   void add_dependency(Task* task);
+  const std::deque<Task*>& dependencies() const { return dependencies_; }
 
  protected:
   virtual void on_exec(const TaskContext& ctx) = 0;
@@ -94,7 +99,8 @@ class FuncTask : public Task {
 
  public:
   template <typename F>
-  FuncTask(F f) : Task(make_task_args_permission<As...>()), func_(f) {}
+  FuncTask(std::string_view name, F f)
+      : Task(name, make_task_args_permission<As...>()), func_(f) {}
 
  protected:
   virtual void on_exec(const TaskContext& ctx) override {
@@ -128,9 +134,10 @@ class TaskExecutor : private TaskObserver, private t9::NonMovable {
 
   void add_task(std::shared_ptr<Task> task);
   template <typename F>
-  void add_task(F f, const TaskOption& opt = TaskOption{}) {
+  void add_task(std::string_view name, F f,
+                const TaskOption& opt = TaskOption{}) {
     using args_type = typename t9::function_traits<F>::args_type;
-    add_task_(f, args_type{}, opt);
+    add_task_(name, f, args_type{}, opt);
   }
 
   void run();
@@ -142,13 +149,17 @@ class TaskExecutor : private TaskObserver, private t9::NonMovable {
 
  private:
   template <typename F, typename... As>
-  void add_task_(F f, t9::type_list<As...>, const TaskOption& opt) {
-    std::shared_ptr<Task> task = std::make_shared<FuncTask<As...>>(f);
+  void add_task_(std::string_view name, F f, t9::type_list<As...>,
+                 const TaskOption& opt) {
+    std::shared_ptr<Task> task = std::make_shared<FuncTask<As...>>(name, f);
     if (opt.is_fence) {
       task->set_fence();
     }
     add_task(std::move(task));
   }
+
+ public:
+  void render_debug_gui();
 };
 
 }  // namespace sai

@@ -23,11 +23,16 @@ void tick_frame(Frame* frame) {
   ++frame->frame_count;
 }
 
+struct System {
+  sai::TaskExecutor* tasks = nullptr;
+};
+
 // ImGui にマルチスレッドでアクセスしないための識別子
 // 引数に `MutexRes<DebugGui>` をもつ関数は同時に実行されない。
 struct DebugGui {};
 
-void draw_frame_info(const Frame* frame, sai::MutexRes<DebugGui>) {
+void draw_frame_info(const Frame* frame, const System* sys,
+                     sai::MutexRes<DebugGui>) {
   ImGui::Begin("Debug");
   {
     auto delta = frame->start_count - frame->last_start_count;
@@ -36,15 +41,10 @@ void draw_frame_info(const Frame* frame, sai::MutexRes<DebugGui>) {
     ImGui::Text("delta (ms): %lu", delta_ms);
     ImGui::Text("frame count: %lu", frame->frame_count);
 
-    auto canvas_p0 = ImGui::GetCursorScreenPos();
-    auto canvas_s = ImGui::GetContentRegionAvail();
-    if (canvas_s.x < 50.0f) canvas_s.x = 50.0f;
-    if (canvas_s.y < 50.0f) canvas_s.y = 50.0f;
-    auto canvas_p1 = ImVec2(canvas_p0.x + canvas_s.x, canvas_p0.y + canvas_s.y);
+    ImGui::Separator();
 
-    auto draw = ImGui::GetWindowDrawList();
-    draw->AddRectFilled(canvas_p0, canvas_p1, IM_COL32(0x30, 0x30, 0x30, 0xff));
-    draw->AddRect(canvas_p0, canvas_p1, IM_COL32(0xff, 0xff, 0xff, 0xff));
+    ImGui::Text("<Tasks>");
+    sys->tasks->render_debug_gui();
   }
   ImGui::End();
 }
@@ -52,15 +52,17 @@ void draw_frame_info(const Frame* frame, sai::MutexRes<DebugGui>) {
 void setup_task(sai::TaskExecutor* tasks) {
   {  // setup context.
     tasks->add_context<DebugGui>();
+    tasks->add_context<System>(System{tasks});
     tasks->add_context<Frame>();
   }
 
   {  // setup task.
     auto fence = sai::TaskOption().set_fence();
 
-    tasks->add_task(tick_frame, fence);
-    tasks->add_task([](sai::MutexRes<DebugGui>) { ImGui::ShowDemoWindow(); });
-    tasks->add_task(draw_frame_info);
+    tasks->add_task("tick frame", tick_frame, fence);
+    tasks->add_task("show demo",
+                    [](sai::MutexRes<DebugGui>) { ImGui::ShowDemoWindow(); });
+    tasks->add_task("draw frame info", draw_frame_info);
   }
 }
 

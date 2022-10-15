@@ -6,8 +6,8 @@
 namespace sai {
 
 // Task.
-/*explicit*/ Task::Task(const TaskArgsPermission& permission)
-    : args_permission_(permission) {}
+Task::Task(std::string_view name, const TaskArgsPermission& permission)
+    : name_(name), args_permission_(permission) {}
 
 void Task::exec(const TaskContext& ctx) {
   if (observer_) {
@@ -189,6 +189,49 @@ void TaskExecutor::run() {
   UniqueLock lock(mutex_.get());
   notify_ = true;
   SDL_CondSignal(condition_.get());
+}
+
+void TaskExecutor::render_debug_gui() {
+  std::map<Task*, int> task_depth;
+  int max_depth = 0;
+  for (auto& task : tasks_) {
+    int depth = 0;
+    if (!task->dependencies().empty()) {
+      for (auto& d_task : task->dependencies()) {
+        if (auto it = task_depth.find(d_task); it != task_depth.end()) {
+          depth = std::max(it->second + 1, depth);
+        }
+      }
+    }
+    max_depth = std::max(depth, max_depth);
+    task_depth.emplace(task.get(), depth);
+  }
+
+  std::multimap<int, Task*> render_tasks;
+  for (auto it : task_depth) {
+    render_tasks.emplace(it.second, it.first);
+  }
+
+  for (int i = 0; i <= max_depth; ++i) {
+    ImGui::Text("%d:", i);
+    auto range = render_tasks.equal_range(i);
+    for (auto it = range.first; it != range.second; ++it) {
+      ImGui::SameLine();
+      ImGui::Text("[%s]", it->second->name().c_str());
+    }
+  }
+
+  /*
+  auto canvas_p0 = ImGui::GetCursorScreenPos();
+  auto canvas_s = ImGui::GetContentRegionAvail();
+  if (canvas_s.x < 50.0f) canvas_s.x = 50.0f;
+  if (canvas_s.y < 50.0f) canvas_s.y = 50.0f;
+  auto canvas_p1 = ImVec2(canvas_p0.x + canvas_s.x, canvas_p0.y + canvas_s.y);
+
+  auto draw = ImGui::GetWindowDrawList();
+  draw->AddRectFilled(canvas_p0, canvas_p1, IM_COL32(0x30, 0x30, 0x30, 0xff));
+  draw->AddRect(canvas_p0, canvas_p1, IM_COL32(0xff, 0xff, 0xff, 0xff));
+  */
 }
 
 }  // namespace sai
