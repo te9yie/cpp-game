@@ -11,16 +11,6 @@
 
 namespace {
 
-struct DestroyWindow {
-  void operator()(SDL_Window* w) const { SDL_DestroyWindow(w); }
-};
-using WindowPtr = std::unique_ptr<SDL_Window, DestroyWindow>;
-
-struct DestroyRenderer {
-  void operator()(SDL_Renderer* r) const { SDL_DestroyRenderer(r); }
-};
-using RendererPtr = std::unique_ptr<SDL_Renderer, DestroyRenderer>;
-
 struct Frame {
   Uint64 last_start_count = 0;
   Uint64 start_count = 0;
@@ -59,6 +49,35 @@ void draw_frame_info(const Frame* frame, sai::MutexRes<DebugGui>) {
   ImGui::End();
 }
 
+void setup_task(sai::TaskExecutor* tasks) {
+  {  // setup context.
+    tasks->add_context<DebugGui>();
+    tasks->add_context<Frame>();
+  }
+
+  {  // setup task.
+    auto fence = sai::TaskOption().set_fence();
+
+    tasks->add_task(tick_frame, fence);
+    tasks->add_task([](sai::MutexRes<DebugGui>) { ImGui::ShowDemoWindow(); });
+    tasks->add_task(draw_frame_info);
+  }
+}
+
+}  // namespace
+
+namespace {
+
+struct DestroyWindow {
+  void operator()(SDL_Window* w) const { SDL_DestroyWindow(w); }
+};
+using WindowPtr = std::unique_ptr<SDL_Window, DestroyWindow>;
+
+struct DestroyRenderer {
+  void operator()(SDL_Renderer* r) const { SDL_DestroyRenderer(r); }
+};
+using RendererPtr = std::unique_ptr<SDL_Renderer, DestroyRenderer>;
+
 }  // namespace
 
 int main(int /*argc*/, char* /*argv*/[]) {
@@ -96,18 +115,7 @@ int main(int /*argc*/, char* /*argv*/[]) {
   ImGui_ImplSDL2_InitForSDLRenderer(window.get(), renderer.get());
   ImGui_ImplSDLRenderer_Init(renderer.get());
 
-  {  // setup context.
-    tasks.add_context<DebugGui>();
-    tasks.add_context<Frame>();
-  }
-
-  {  // setup task.
-    auto fence = sai::TaskOption().set_fence();
-
-    tasks.add_task(tick_frame, fence);
-    tasks.add_task([](sai::MutexRes<DebugGui>) { ImGui::ShowDemoWindow(); });
-    tasks.add_task(draw_frame_info);
-  }
+  setup_task(&tasks);
 
   bool loop = true;
   while (loop) {
