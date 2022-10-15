@@ -7,6 +7,7 @@
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_sdlrenderer.h"
 #include "sai/task.h"
+#include "sai/task_arg_ex.h"
 
 namespace {
 
@@ -26,27 +27,17 @@ struct Frame {
   Uint64 frame_count = 0;
 };
 
-void start_frame(Frame* frame) {
-  frame->start_count = SDL_GetPerformanceCounter();
-}
-void end_frame(Frame* frame) {
+void tick_frame(Frame* frame) {
   frame->last_start_count = frame->start_count;
+  frame->start_count = SDL_GetPerformanceCounter();
   ++frame->frame_count;
 }
 
+// ImGui にマルチスレッドでアクセスしないための識別子
+// 引数に `MutexRes<DebugGui>` をもつ関数は同時に実行されない。
 struct DebugGui {};
 
-void start_imgui(DebugGui*) {
-  ImGui_ImplSDLRenderer_NewFrame();
-  ImGui_ImplSDL2_NewFrame();
-  ImGui::NewFrame();
-}
-void end_imgui(DebugGui*) { ImGui::Render(); }
-void render_imgui(DebugGui*) {
-  ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
-}
-
-void draw_frame_info(const Frame* frame, DebugGui*) {
+void draw_frame_info(const Frame* frame, sai::MutexRes<DebugGui>) {
   ImGui::Begin("Debug");
   {
     auto delta = frame->start_count - frame->last_start_count;
@@ -113,26 +104,9 @@ int main(int /*argc*/, char* /*argv*/[]) {
   {  // setup task.
     auto fence = sai::TaskOption().set_fence();
 
-    tasks.add_task(start_frame, fence);
-    tasks.add_task(start_imgui, fence);
-
-    {  // update.
-      tasks.add_task([](DebugGui*) { ImGui::ShowDemoWindow(); });
-      tasks.add_task(draw_frame_info);
-    }
-
-    tasks.add_task(end_imgui, fence);
-
-    // render.
-    tasks.add_task(
-        [&]() {
-          SDL_SetRenderDrawColor(renderer.get(), 0x12, 0x34, 0x56, 0xff);
-          SDL_RenderClear(renderer.get());
-        },
-        fence);
-    tasks.add_task(render_imgui, fence);
-    tasks.add_task([&]() { SDL_RenderPresent(renderer.get()); }, fence);
-    tasks.add_task(end_frame);
+    tasks.add_task(tick_frame, fence);
+    tasks.add_task([](sai::MutexRes<DebugGui>) { ImGui::ShowDemoWindow(); });
+    tasks.add_task(draw_frame_info);
   }
 
   bool loop = true;
@@ -151,7 +125,20 @@ int main(int /*argc*/, char* /*argv*/[]) {
         }
       }
     }
+
+    ImGui_ImplSDLRenderer_NewFrame();
+    ImGui_ImplSDL2_NewFrame();
+    ImGui::NewFrame();
+
     tasks.run();
+
+    ImGui::Render();
+
+    // render.
+    SDL_SetRenderDrawColor(renderer.get(), 0x12, 0x34, 0x56, 0xff);
+    SDL_RenderClear(renderer.get());
+    ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
+    SDL_RenderPresent(renderer.get());
   }
 
   ImGui_ImplSDLRenderer_Shutdown();
