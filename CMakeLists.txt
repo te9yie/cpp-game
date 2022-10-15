@@ -30,14 +30,20 @@ file(GLOB SOURCES
 	${PROJECT_SOURCE_DIR}/src/*.h
 	${PROJECT_SOURCE_DIR}/src/*.cpp)
 
-file(GLOB T9_SOURCES
+file(GLOB_RECURSE T9_SOURCES
 	${PROJECT_SOURCE_DIR}/src/t9/*.h
 	${PROJECT_SOURCE_DIR}/src/t9/*.cpp)
 source_group(t9 FILES ${T9_SOURCES})
 
+file(GLOB_RECURSE SAI_SOURCES
+	${PROJECT_SOURCE_DIR}/src/sai/*.h
+	${PROJECT_SOURCE_DIR}/src/sai/*.cpp)
+source_group(sai FILES ${SAI_SOURCES})
+
 add_executable(${PROJECT_NAME} WIN32
     ${SOURCES}
     ${T9_SOURCES}
+    ${SAI_SOURCES}
     ${IMGUI_SOURCES} ${IMGUI_BACKENDS})
 target_compile_options(${PROJECT_NAME} PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W4>

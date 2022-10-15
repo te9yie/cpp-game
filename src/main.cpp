@@ -6,6 +6,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_sdlrenderer.h"
+#include "sai/job.h"
 
 namespace {
 
@@ -53,6 +54,9 @@ int main(int /*argc*/, char* /*argv*/[]) {
   ImGui_ImplSDL2_InitForSDLRenderer(window.get(), renderer.get());
   ImGui_ImplSDLRenderer_Init(renderer.get());
 
+  sai::JobExecutor executor("Task");
+  executor.start(2);
+
   Uint64 last_start_time = 0;
 
   bool loop = true;
@@ -81,10 +85,26 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
     ImGui::Begin("Debug");
     {
+      if (ImGui::Button("Hello")) {
+        executor.submit_func(
+            []() { SDL_Log("Hello %u", SDL_GetThreadID(nullptr)); });
+      }
       auto delta = start_time - last_start_time;
       auto delta_ms = delta * 1000 / SDL_GetPerformanceFrequency();
       ImGui::Text("delta (count): %lu", delta);
       ImGui::Text("delta (ms): %lu", delta_ms);
+
+      auto canvas_p0 = ImGui::GetCursorScreenPos();
+      auto canvas_s = ImGui::GetContentRegionAvail();
+      if (canvas_s.x < 50.0f) canvas_s.x = 50.0f;
+      if (canvas_s.y < 50.0f) canvas_s.y = 50.0f;
+      auto canvas_p1 =
+          ImVec2(canvas_p0.x + canvas_s.x, canvas_p0.y + canvas_s.y);
+
+      auto draw = ImGui::GetWindowDrawList();
+      draw->AddRectFilled(canvas_p0, canvas_p1,
+                          IM_COL32(0x30, 0x30, 0x30, 0xff));
+      draw->AddRect(canvas_p0, canvas_p1, IM_COL32(0xff, 0xff, 0xff, 0xff));
     }
     ImGui::End();
 
