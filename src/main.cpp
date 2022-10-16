@@ -130,6 +130,7 @@ int main(int /*argc*/, char* /*argv*/[]) {
   while (loop) {
     profiler.tick();
     {
+      PERF_TAG("HandleEvents");
       SDL_Event e;
       while (SDL_PollEvent(&e)) {
         ImGui_ImplSDL2_ProcessEvent(&e);
@@ -143,20 +144,27 @@ int main(int /*argc*/, char* /*argv*/[]) {
         }
       }
     }
+    {
+      PERF_TAG("Update");
 
-    ImGui_ImplSDLRenderer_NewFrame();
-    ImGui_ImplSDL2_NewFrame();
-    ImGui::NewFrame();
+      ImGui_ImplSDLRenderer_NewFrame();
+      ImGui_ImplSDL2_NewFrame();
+      ImGui::NewFrame();
 
-    tasks.run();
+      tasks.run();
 
-    ImGui::Render();
-
-    // render.
-    SDL_SetRenderDrawColor(renderer.get(), 0x12, 0x34, 0x56, 0xff);
-    SDL_RenderClear(renderer.get());
-    ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
-    SDL_RenderPresent(renderer.get());
+      ImGui::Render();
+    }
+    {
+      PERF_TAG("Render");
+      SDL_SetRenderDrawColor(renderer.get(), 0x12, 0x34, 0x56, 0xff);
+      SDL_RenderClear(renderer.get());
+      ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
+    }
+    {
+      PERF_TAG("Swap");
+      SDL_RenderPresent(renderer.get());
+    }
   }
 
   ImGui_ImplSDLRenderer_Shutdown();

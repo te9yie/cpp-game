@@ -45,13 +45,14 @@ class PerformanceProfiler : public t9::Singleton<PerformanceProfiler> {
   std::map<SDL_threadID, std::unique_ptr<Timeline>> timelines_;
   std::array<Uint64, 2> start_count_{0};
   std::array<std::size_t, 2> frame_count_{0};
+  SDL_threadID main_thread_id_ = 0;
   bool use_back_buffer_ = false;
   bool ticked_ = false;
 
  public:
   PerformanceProfiler() = default;
 
-  void setup_thread(std::string_view name);
+  SDL_threadID setup_thread(std::string_view name);
 
   void tick();
 

@@ -5,16 +5,20 @@
 
 namespace sai {
 
-void PerformanceProfiler::setup_thread(std::string_view name) {
+SDL_threadID PerformanceProfiler::setup_thread(std::string_view name) {
   assert(!ticked_);
   auto id = SDL_ThreadID();
   auto timeline = std::make_unique<Timeline>();
   timeline->name = name;
   timelines_.emplace(id, std::move(timeline));
+  return id;
 }
 
 void PerformanceProfiler::tick() {
-  ticked_ = true;
+  if (!ticked_) {
+    main_thread_id_ = setup_thread("MainThread");
+    ticked_ = true;
+  }
   auto read_index = read_index_();
   auto write_index = write_index_();
   start_count_[read_index] = SDL_GetPerformanceCounter();
@@ -62,9 +66,8 @@ void PerformanceProfiler::render_debug_gui() {
   auto frame_count = frame_count_[index];
   auto count2us = [freq](Uint64 count) { return count * 1000 * 1000 / freq; };
 
-  /*
-  for (auto& it : timelines_) {
-    auto timeline = it.second.get();
+  if (auto it = timelines_.find(main_thread_id_); it != timelines_.end()) {
+    auto timeline = it->second.get();
     if (ImGui::CollapsingHeader(timeline->name.c_str())) {
       std::stack<Tag> tag_stack;
       auto& tags = timeline->tags[index];
@@ -77,14 +80,11 @@ void PerformanceProfiler::render_debug_gui() {
             tag_stack.pop();
 			auto delta_us = count2us(tag.end.count - start_tag.start.count);
 			ImGui::Text("%s: %zu", start_tag.start.name, delta_us);
-          } else {
-            ImGui::Text("---: %zu", tag.end.count);
           }
         }
       }
     }
   }
-  */
 
   auto canvas_p0 = ImGui::GetCursorScreenPos();
   auto canvas_s = ImGui::GetContentRegionAvail();
@@ -97,7 +97,7 @@ void PerformanceProfiler::render_debug_gui() {
   const auto us2x = [us30f, &canvas_s](Uint64 us) { return canvas_s.x * us / us30f; };
   const auto start_count = start_count_[index];
   const auto line_h = 10.0f;
-  const auto timeline_h = line_h * 5;
+  const auto timeline_h = line_h * 3;
 
   auto draw = ImGui::GetWindowDrawList();
   draw->AddRectFilled(canvas_p0, canvas_p1, IM_COL32(0x30, 0x30, 0x30, 0xff));
