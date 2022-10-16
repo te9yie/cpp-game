@@ -1,7 +1,12 @@
 #include "performance_profiler.h"
 
 #include <cassert>
+#include <cmath>
+#include <numeric>
 #include <stack>
+
+#include "t9/color.h"
+#include "t9/hash.h"
 
 namespace sai {
 
@@ -76,10 +81,10 @@ void PerformanceProfiler::render_debug_gui() {
           tag_stack.push(tag);
         } else {
           if (tag.end.frame == frame_count) {
-			auto start_tag = tag_stack.top();
+            auto start_tag = tag_stack.top();
             tag_stack.pop();
-			auto delta_us = count2us(tag.end.count - start_tag.start.count);
-			ImGui::Text("%s: %zu", start_tag.start.name, delta_us);
+            auto delta_us = count2us(tag.end.count - start_tag.start.count);
+            ImGui::Text("%s: %zu", start_tag.start.name, delta_us);
           }
         }
       }
@@ -94,7 +99,9 @@ void PerformanceProfiler::render_debug_gui() {
 
   const auto us30f = 1000 * 1000 / 30;
   const auto us60f = 1000 * 1000 / 60;
-  const auto us2x = [us30f, &canvas_s](Uint64 us) { return canvas_s.x * us / us30f; };
+  const auto us2x = [us30f, &canvas_s](Uint64 us) {
+    return canvas_s.x * us / us30f;
+  };
   const auto start_count = start_count_[index];
   const auto line_h = 10.0f;
   const auto timeline_h = line_h * 3;
@@ -120,9 +127,15 @@ void PerformanceProfiler::render_debug_gui() {
           auto end_us = count2us(tag.end.count - start_count);
           auto depth = tag_stack.size();
 
-          auto p0 = ImVec2(us2x(start_us) + offset.x, depth * line_h + offset.y);
-          auto p1 = ImVec2(us2x(end_us) + offset.x, (depth + 1) * line_h + offset.y);
-          draw->AddRect(p0, p1, IM_COL32(0xff, 0xff, 0xff, 0xff));
+          auto name_hash = t9::fnv1a(start_tag.start.name,
+                                     std::strlen(start_tag.start.name));
+          auto h = 1.0f * name_hash / std::numeric_limits<std::uint32_t>::max();
+          auto rgb = t9::hsv2rgb(h, 0.95f, 0.95f);
+          auto p0 =
+              ImVec2(us2x(start_us) + offset.x, depth * line_h + offset.y);
+          auto p1 =
+              ImVec2(us2x(end_us) + offset.x, (depth + 1) * line_h + offset.y);
+          draw->AddRectFilled(p0, p1, ImColor(rgb.r, rgb.g, rgb.b));
         }
       }
     }
