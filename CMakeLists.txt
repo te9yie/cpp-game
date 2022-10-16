@@ -27,10 +27,6 @@ file(GLOB IMGUI_BACKENDS
     ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl*.cpp)
 source_group(imgui FILES ${IMGUI_SOURCES} ${IMGUI_BACKENDS})
 
-file(GLOB SOURCES
-	${PROJECT_SOURCE_DIR}/src/*.h
-	${PROJECT_SOURCE_DIR}/src/*.cpp)
-
 file(GLOB_RECURSE T9_SOURCES
 	${PROJECT_SOURCE_DIR}/src/t9/*.h
 	${PROJECT_SOURCE_DIR}/src/t9/*.cpp)
@@ -41,11 +37,21 @@ file(GLOB_RECURSE SAI_SOURCES
 	${PROJECT_SOURCE_DIR}/src/sai/*.cpp)
 source_group(sai FILES ${SAI_SOURCES})
 
+file(GLOB_RECURSE GAME_SOURCES
+	${PROJECT_SOURCE_DIR}/src/game/*.h
+	${PROJECT_SOURCE_DIR}/src/game/*.cpp)
+source_group(game FILES ${GAME_SOURCES})
+
+file(GLOB SOURCES
+	${PROJECT_SOURCE_DIR}/src/*.h
+	${PROJECT_SOURCE_DIR}/src/*.cpp)
+
 add_executable(${PROJECT_NAME} WIN32
-    ${SOURCES}
+    ${IMGUI_SOURCES} ${IMGUI_BACKENDS}
     ${T9_SOURCES}
     ${SAI_SOURCES}
-    ${IMGUI_SOURCES} ${IMGUI_BACKENDS})
+    ${GAME_SOURCES}
+    ${SOURCES})
 target_compile_options(${PROJECT_NAME} PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W4>
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-W -Wall>)

@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <memory>
 
+#include "game/debug_gui.h"
+#include "game/frame.h"
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_sdlrenderer.h"
@@ -12,29 +14,13 @@
 
 namespace {
 
-struct Frame {
-  Uint64 last_start_count = 0;
-  Uint64 start_count = 0;
-  Uint64 frame_count = 0;
-};
-
-void tick_frame(Frame* frame) {
-  frame->last_start_count = frame->start_count;
-  frame->start_count = SDL_GetPerformanceCounter();
-  ++frame->frame_count;
-}
-
 struct System {
   sai::PerformanceProfiler* profiler = nullptr;
   sai::TaskExecutor* tasks = nullptr;
 };
 
-// ImGui にマルチスレッドでアクセスしないための識別子
-// 引数に `MutexRes<DebugGui>` をもつ関数は同時に実行されない。
-struct DebugGui {};
-
-void draw_frame_info(const Frame* frame, const System* sys,
-                     sai::MutexRes<DebugGui>) {
+void draw_frame_info(const game::Frame* frame, const System* sys,
+                     sai::MutexRes<game::DebugGui>) {
   ImGui::Begin("Debug");
   {
     auto delta = frame->start_count - frame->last_start_count;
@@ -56,16 +42,17 @@ void draw_frame_info(const Frame* frame, const System* sys,
 
 void setup_task(sai::TaskExecutor* tasks) {
   {  // setup context.
-    tasks->add_context<Frame>();
-    tasks->add_context<DebugGui>();
+    tasks->add_context<game::Frame>();
+    tasks->add_context<game::DebugGui>();
   }
 
   {  // setup task.
     auto fence = sai::TaskOption().set_fence();
 
-    tasks->add_task("tick frame", tick_frame, fence);
-    tasks->add_task("show demo",
-                    [](sai::MutexRes<DebugGui>) { ImGui::ShowDemoWindow(); });
+    tasks->add_task("tick frame", game::tick_frame, fence);
+    tasks->add_task("show demo", [](sai::MutexRes<game::DebugGui>) {
+      ImGui::ShowDemoWindow();
+    });
     tasks->add_task("draw frame info", draw_frame_info);
   }
 }
@@ -101,6 +88,9 @@ int main(int /*argc*/, char* /*argv*/[]) {
   sai::TaskExecutor tasks("TaskExecutor");
   if (!tasks.setup(2)) return false;
 
+  tasks.add_context<System>(System{&profiler, &tasks});
+  setup_task(&tasks);
+
   WindowPtr window(SDL_CreateWindow(TITLE, SDL_WINDOWPOS_UNDEFINED,
                                     SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH,
                                     SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE));
@@ -122,9 +112,6 @@ int main(int /*argc*/, char* /*argv*/[]) {
   ImGui_ImplSDL2_InitForSDLRenderer(window.get(), renderer.get());
   ImGui_ImplSDLRenderer_Init(renderer.get());
 
-  tasks.add_context<System>(System{&profiler, &tasks});
-  setup_task(&tasks);
-
   bool loop = true;
   while (loop) {
     profiler.tick();
@@ -145,7 +132,6 @@ int main(int /*argc*/, char* /*argv*/[]) {
     }
     {
       PERF_TAG("Update");
-
       ImGui_ImplSDLRenderer_NewFrame();
       ImGui_ImplSDL2_NewFrame();
       ImGui::NewFrame();
