@@ -1,13 +1,15 @@
 #pragma once
 
-#include <t9/singleton.h>
-
+#include <array>
 #include <map>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "config.h"
+#include "t9/singleton.h"
+#include "threading.h"
 
 namespace sai {
 
@@ -23,11 +25,12 @@ class PerformanceProfiler : public t9::Singleton<PerformanceProfiler> {
     } type = Type::None;
     union {
       struct {
-        Uint64 time;
+        Uint64 count;
         const char* name;
       } start;
       struct {
-        Uint64 time;
+        Uint64 count;
+        std::size_t frame;
       } end;
     };
   };
@@ -35,17 +38,41 @@ class PerformanceProfiler : public t9::Singleton<PerformanceProfiler> {
   // Timeline.
   struct Timeline {
     std::string name;
-    std::vector<Tag> tags;
+    std::array<std::vector<Tag>, 2> tags;
   };
 
  private:
   std::map<SDL_threadID, std::unique_ptr<Timeline>> timelines_;
+  std::array<Uint64, 2> start_count_{0};
+  std::array<std::size_t, 2> frame_count_{0};
+  bool use_back_buffer_ = false;
+  bool ticked_ = false;
 
  public:
   PerformanceProfiler() = default;
 
-  void start_tag(const char* name);
-  void end_tag();
+  void setup_thread(std::string_view name);
+
+  void tick();
+
+  std::size_t start_tag(const char* name);
+  void end_tag(std::size_t start_id);
+
+ public:
+  void render_debug_gui();
+
+ private:
+  std::size_t read_index_() const { return use_back_buffer_ ? 0u : 1u; }
+  std::size_t write_index_() const { return use_back_buffer_ ? 1u : 0u; }
 };
+
+struct PerformanceTag {
+  std::size_t start_id = 0;
+  PerformanceTag(const char* name)
+      : start_id(PerformanceProfiler::instance()->start_tag(name)) {}
+  ~PerformanceTag() { PerformanceProfiler::instance()->end_tag(start_id); }
+};
+
+#define PERF_TAG(name) sai::PerformanceTag tag##__LINE__(name)
 
 }  // namespace sai

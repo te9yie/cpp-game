@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <iterator>
 
+#include "performance_profiler.h"
+
 namespace sai {
 
 // Task.
@@ -10,6 +12,7 @@ Task::Task(std::string_view name, const TaskArgsPermission& permission)
     : name_(name), args_permission_(permission) {}
 
 void Task::exec(const TaskContext& ctx) {
+  PERF_TAG(name_.c_str());
   if (observer_) {
     observer_->on_pre_exec_task(this);
   }

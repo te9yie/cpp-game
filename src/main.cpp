@@ -6,6 +6,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_sdlrenderer.h"
+#include "sai/performance_profiler.h"
 #include "sai/task.h"
 #include "sai/task_arg_ex.h"
 
@@ -24,6 +25,7 @@ void tick_frame(Frame* frame) {
 }
 
 struct System {
+  sai::PerformanceProfiler* profiler = nullptr;
   sai::TaskExecutor* tasks = nullptr;
 };
 
@@ -42,18 +44,20 @@ void draw_frame_info(const Frame* frame, const System* sys,
     ImGui::Text("frame count: %lu", frame->frame_count);
 
     ImGui::Separator();
-
     ImGui::Text("<Tasks>");
     sys->tasks->render_debug_gui();
+
+    ImGui::Separator();
+    ImGui::Text("<Profiler>");
+    sys->profiler->render_debug_gui();
   }
   ImGui::End();
 }
 
 void setup_task(sai::TaskExecutor* tasks) {
   {  // setup context.
-    tasks->add_context<DebugGui>();
-    tasks->add_context<System>(System{tasks});
     tasks->add_context<Frame>();
+    tasks->add_context<DebugGui>();
   }
 
   {  // setup task.
@@ -93,8 +97,11 @@ int main(int /*argc*/, char* /*argv*/[]) {
   }
   atexit(SDL_Quit);
 
+  sai::PerformanceProfiler profiler;
   sai::TaskExecutor tasks("TaskExecutor");
   if (!tasks.setup(2)) return false;
+
+  tasks.add_context<System>(System{&profiler, &tasks});
 
   WindowPtr window(SDL_CreateWindow(TITLE, SDL_WINDOWPOS_UNDEFINED,
                                     SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH,
@@ -121,6 +128,7 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
   bool loop = true;
   while (loop) {
+    profiler.tick();
     {
       SDL_Event e;
       while (SDL_PollEvent(&e)) {

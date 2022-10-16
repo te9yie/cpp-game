@@ -54,6 +54,7 @@ class JobExecutor : t9::NonMovable {
   }
 
  private:
+  const char* get_thread_name_(SDL_threadID id) const;
   void exec_jobs_();
 
  private:

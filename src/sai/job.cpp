@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cstdio>
 
+#include "performance_profiler.h"
+
 namespace sai {
 
 /*explicit*/ JobExecutor::JobExecutor(std::string_view name) : name_(name) {}
@@ -72,6 +74,15 @@ void JobExecutor::submit(std::shared_ptr<Job> job) {
   SDL_CondSignal(condition_.get());
 }
 
+const char* JobExecutor::get_thread_name_(SDL_threadID id) const {
+  for (auto& t : threads_) {
+    if (id == SDL_GetThreadID(t)) {
+      return SDL_GetThreadName(t);
+    }
+  }
+  return "";
+}
+
 void JobExecutor::exec_jobs_() {
   while (!is_stop_) {
     std::shared_ptr<Job> job;
@@ -90,6 +101,8 @@ void JobExecutor::exec_jobs_() {
 
 /*static*/ int JobExecutor::thread_func_(void* p) {
   auto self = static_cast<JobExecutor*>(p);
+  PerformanceProfiler::instance()->setup_thread(
+      self->get_thread_name_(SDL_ThreadID()));
   self->exec_jobs_();
   return 0;
 }
