@@ -74,6 +74,8 @@ struct PerformanceTag {
   ~PerformanceTag() { PerformanceProfiler::instance()->end_tag(start_id); }
 };
 
-#define PERF_TAG(name) sai::PerformanceTag tag##__LINE__(name)
+#define PERF_TAG__(name, line) sai::PerformanceTag tag##line(name)
+#define PERF_TAG_(name, line) PERF_TAG__(name, line)
+#define PERF_TAG(name) PERF_TAG_(name, __LINE__)
 
 }  // namespace sai

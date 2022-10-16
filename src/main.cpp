@@ -101,8 +101,6 @@ int main(int /*argc*/, char* /*argv*/[]) {
   sai::TaskExecutor tasks("TaskExecutor");
   if (!tasks.setup(2)) return false;
 
-  tasks.add_context<System>(System{&profiler, &tasks});
-
   WindowPtr window(SDL_CreateWindow(TITLE, SDL_WINDOWPOS_UNDEFINED,
                                     SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH,
                                     SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE));
@@ -124,6 +122,7 @@ int main(int /*argc*/, char* /*argv*/[]) {
   ImGui_ImplSDL2_InitForSDLRenderer(window.get(), renderer.get());
   ImGui_ImplSDLRenderer_Init(renderer.get());
 
+  tasks.add_context<System>(System{&profiler, &tasks});
   setup_task(&tasks);
 
   bool loop = true;
@@ -151,7 +150,10 @@ int main(int /*argc*/, char* /*argv*/[]) {
       ImGui_ImplSDL2_NewFrame();
       ImGui::NewFrame();
 
-      tasks.run();
+      {
+        PERF_TAG("RunTasks");
+        tasks.run();
+      }
 
       ImGui::Render();
     }
