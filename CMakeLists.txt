@@ -27,10 +27,20 @@ file(GLOB IMGUI_BACKENDS
     ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl*.cpp)
 source_group(imgui FILES ${IMGUI_SOURCES} ${IMGUI_BACKENDS})
 
-file(GLOB_RECURSE T9_SOURCES
+file(GLOB T9_SOURCES
 	${PROJECT_SOURCE_DIR}/src/t9/*.h
 	${PROJECT_SOURCE_DIR}/src/t9/*.cpp)
 source_group(t9 FILES ${T9_SOURCES})
+
+file(GLOB T9_INTRUSIVE_SOURCES
+	${PROJECT_SOURCE_DIR}/src/t9/intrusive/*.h
+	${PROJECT_SOURCE_DIR}/src/t9/intrusive/*.cpp)
+source_group(t9/intrusive FILES ${T9_INTRUSIVE_SOURCES})
+
+file(GLOB T9_ECS_SOURCES
+	${PROJECT_SOURCE_DIR}/src/t9/ecs/*.h
+	${PROJECT_SOURCE_DIR}/src/t9/ecs/*.cpp)
+source_group(t9/ecs FILES ${T9_ECS_SOURCES})
 
 file(GLOB_RECURSE SAI_SOURCES
 	${PROJECT_SOURCE_DIR}/src/sai/*.h
@@ -49,6 +59,8 @@ file(GLOB SOURCES
 add_executable(${PROJECT_NAME} WIN32
     ${IMGUI_SOURCES} ${IMGUI_BACKENDS}
     ${T9_SOURCES}
+    ${T9_INTRUSIVE_SOURCES}
+    ${T9_ECS_SOURCES}
     ${SAI_SOURCES}
     ${GAME_SOURCES}
     ${SOURCES})
