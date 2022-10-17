@@ -103,7 +103,7 @@ class Chunk {
 
   template <typename... Ts>
   bool contains() {
-    return tuple_->contains<Ts...>();
+    return tuple_->contains(type_list<Ts...>{});
   }
 
   Chunk* next_chunk() { return next_chunk_; }

@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "game/debug_gui.h"
+#include "game/ecs.h"
 #include "game/frame.h"
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
@@ -11,6 +12,7 @@
 #include "sai/performance_profiler.h"
 #include "sai/task.h"
 #include "sai/task_arg_ex.h"
+#include "t9/ecs/registry.h"
 
 namespace {
 
@@ -44,15 +46,23 @@ void setup_task(sai::TaskExecutor* tasks) {
   {  // setup context.
     tasks->add_context<game::Frame>();
     tasks->add_context<game::DebugGui>();
+    tasks->add_context<t9::ecs::Registry>();
   }
-
+  {  // startup task.
+    tasks->exec_task(game::create_entities);
+  }
   {  // setup task.
     auto fence = sai::TaskOption().set_fence();
 
     tasks->add_task("tick frame", game::tick_frame, fence);
+    tasks->add_task("update query", game::update_status);
+    tasks->add_task("show query", game::show_status);
+    tasks->add_task("show query", game::show_status);
+    /*
     tasks->add_task("show demo", [](sai::MutexRes<game::DebugGui>) {
       ImGui::ShowDemoWindow();
     });
+    */
     tasks->add_task("draw frame info", draw_frame_info);
   }
 }

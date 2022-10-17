@@ -63,6 +63,22 @@ struct task_arg_traits<const T*> {
   static const T* from_context(const TaskContext& ctx) { return ctx.get<T>(); }
 };
 
+template <typename T>
+struct task_arg_traits<T&> {
+  static void set_permission(TaskArgsPermission* p) {
+    p->writes.emplace(task_arg_type_index<T>::index());
+  }
+  static T* from_context(const TaskContext& ctx) { return ctx.get<T>(); }
+};
+
+template <typename T>
+struct task_arg_traits<const T&> {
+  static void set_permission(TaskArgsPermission* p) {
+    p->reads.emplace(task_arg_type_index<T>::index());
+  }
+  static const T* from_context(const TaskContext& ctx) { return ctx.get<T>(); }
+};
+
 // make_task_args_permission.
 namespace task_arg_ {
 

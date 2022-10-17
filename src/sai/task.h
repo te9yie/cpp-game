@@ -140,6 +140,12 @@ class TaskExecutor : private TaskObserver, private t9::NonMovable {
     add_task_(name, f, args_type{}, opt);
   }
 
+  template <typename F>
+  void exec_task(F f) {
+    using args_type = typename t9::function_traits<F>::args_type;
+    exec_task_(f, args_type{});
+  }
+
   void run();
 
  private:
@@ -156,6 +162,11 @@ class TaskExecutor : private TaskObserver, private t9::NonMovable {
       task->set_fence();
     }
     add_task(std::move(task));
+  }
+
+  template <typename F, typename... As>
+  void exec_task_(F f, t9::type_list<As...>) {
+    f(task_arg_traits<As>::from_context(context_)...);
   }
 
  public:

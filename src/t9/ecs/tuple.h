@@ -69,7 +69,7 @@ class Tuple {
   template <typename... Ts>
   bool is_match(type_list<Ts...>) const {
     std::size_t n = sizeof...(Ts);
-    if (type_size_ != n) return false;
+    if (type_count_ != n) return false;
     const Type* types[] = {
         Type::get<typename component_type_traits<Ts>::value_type>()...};
     sort_types(types);
@@ -82,11 +82,11 @@ class Tuple {
   template <typename... Ts>
   bool contains(type_list<Ts...>) const {
     std::size_t n = sizeof...(Ts);
-    if (type_size_ < n) return false;
+    if (type_count_ < n) return false;
     const Type* types[] = {
         Type::get<typename component_type_traits<Ts>::value_type>()...};
     sort_types(types);
-    for (std::size_t i = 0, j = 0; i < type_size_; ++i) {
+    for (std::size_t i = 0, j = 0; i < type_count_; ++i) {
       if (types_[i].type == types[j]) {
         if (++j == n) return true;
       }
