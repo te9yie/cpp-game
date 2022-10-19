@@ -6,6 +6,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_sdlrenderer.h"
+#include "sai/task/executor.h"
 
 namespace {
 
@@ -19,12 +20,24 @@ struct DestroyRenderer {
 };
 using RendererPtr = std::unique_ptr<SDL_Renderer, DestroyRenderer>;
 
+void update_int(int*) {}
+void read_int(const int*) {}
+
 }  // namespace
 
 int main(int /*argc*/, char* /*argv*/[]) {
   const char* TITLE = "Game";
   const int SCREEN_WIDTH = 16 * 60;
   const int SCREEN_HEIGHT = 9 * 60;
+
+  sai::task::Executor tasks;
+  tasks.add_task(update_int);
+  tasks.add_task(read_int);
+  tasks.add_task(read_int);
+  tasks.add_task(update_int);
+  tasks.add_task(read_int);
+  tasks.add_task(read_int);
+  tasks.add_task(update_int);
 
   if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO) < 0) {
     SDL_LogCritical(SDL_LOG_CATEGORY_SYSTEM, "error: %s", SDL_GetError());

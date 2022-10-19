@@ -26,7 +26,7 @@ file(GLOB IMGUI_BACKENDS
     ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl*.cpp)
 source_group(imgui FILES ${IMGUI_SOURCES} ${IMGUI_BACKENDS})
 
-file(GLOB SOURCES
+file(GLOB_RECURSE SOURCES
 	${PROJECT_SOURCE_DIR}/src/*.h
 	${PROJECT_SOURCE_DIR}/src/*.cpp)
 
