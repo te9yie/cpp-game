@@ -6,6 +6,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_sdlrenderer.h"
+#include "sai/job/executor.h"
 #include "sai/task/executor.h"
 
 namespace {
@@ -38,6 +39,11 @@ int main(int /*argc*/, char* /*argv*/[]) {
   tasks.add_task(read_int);
   tasks.add_task(read_int);
   tasks.add_task(update_int);
+
+  sai::job::Executor jobs("JobExecutor");
+  jobs.start(2);
+
+  jobs.submit_func([]() { SDL_Log("Hello Job"); });
 
   if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO) < 0) {
     SDL_LogCritical(SDL_LOG_CATEGORY_SYSTEM, "error: %s", SDL_GetError());

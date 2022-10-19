@@ -30,6 +30,18 @@ file(GLOB_RECURSE SOURCES
 	${PROJECT_SOURCE_DIR}/src/*.h
 	${PROJECT_SOURCE_DIR}/src/*.cpp)
 
+# filter
+file (GLOB T9_SOURCES ${PROJECT_SOURCE_DIR}/src/t9/*)
+source_group(t9 FILES ${T9_SOURCES})
+file (GLOB SAI_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/*)
+source_group(sai FILES ${SAI_SOURCES})
+file (GLOB SAI_JOB_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/job/*)
+source_group(sai/job FILES ${SAI_JOB_SOURCES})
+file (GLOB SAI_TASK_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/task/*)
+source_group(sai/task FILES ${SAI_TASK_SOURCES})
+file (GLOB SAI_THREADING_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/threading/*)
+source_group(sai/threading FILES ${SAI_THREADING_SOURCES})
+
 add_executable(${PROJECT_NAME} WIN32
     ${IMGUI_SOURCES} ${IMGUI_BACKENDS}
     ${SOURCES})
