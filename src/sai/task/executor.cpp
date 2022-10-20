@@ -12,7 +12,7 @@
 namespace sai::task {
 
 /*explicit*/ Executor::Executor(std::string_view name) : executor_(name) {}
-/*virtual*/ Executor::~Executor() /*override*/ { tear_down(); }
+/*virtual*/ Executor::~Executor() { tear_down(); }
 
 bool Executor::setup(std::size_t thread_n) {
   if (!tasks_.empty()) return false;
@@ -40,60 +40,22 @@ bool Executor::setup(std::size_t thread_n) {
 }
 void Executor::tear_down() {
   executor_.stop();
-  wait_tasks_.clear();
-  active_tasks_.clear();
   tasks_.clear();
   mutex_.reset();
   condition_.reset();
 }
 
 void Executor::run(const Context* ctx) {
-  std::for_each(tasks_.begin(), tasks_.end(),
-                [](auto& task) { task->reset_state(); });
-  std::transform(tasks_.begin(), tasks_.end(), std::back_inserter(wait_tasks_),
-                 [](auto& task) { return task.get(); });
-
-  while (!(wait_tasks_.empty() && active_tasks_.empty())) {
-    {
-      for (auto it = wait_tasks_.begin(); it != wait_tasks_.end();) {
-        auto task = *it;
-        if (!task->can_exec()) {
-          ++it;
-          continue;
-        }
-        task->change_state(Task::State::Submit);
-        active_tasks_.emplace_back(task);
-        executor_.submit_func([ctx, task]() { task->exec(ctx); });
-        it = wait_tasks_.erase(it);
-      }
-    }
-    {
-      UniqueLock lock(mutex_.get());
-      while (!notify_) {
-        SDL_CondWait(condition_.get(), mutex_.get());
-      }
-      notify_ = false;
-    }
-    for (auto it = active_tasks_.begin(); it != active_tasks_.end();) {
-      auto task = *it;
-      if (!task->is_state(Task::State::WaitDone)) {
-        ++it;
-        continue;
-      }
-      task->change_state(Task::State::Done);
-      it = active_tasks_.erase(it);
-    }
-  }
+  std::for_each(tasks_.begin(), tasks_.end(), [&](auto& task) {
+    task->set_context(ctx);
+    task->reset_state();
+    executor_.submit(task);
+  });
+  executor_.kick();
+  executor_.join();
 }
 
-/*virtual*/ void Executor::on_pre_exec_task(Task*) /*override*/ {}
-/*virtual*/ void Executor::on_post_exec_task(Task*) /*override*/ {
-  UniqueLock lock(mutex_.get());
-  notify_ = true;
-  SDL_CondSignal(condition_.get());
-}
-
-void Executor::add_task_(std::unique_ptr<Task> task) {
+void Executor::add_task_(std::shared_ptr<Task> task) {
   // setup dependencies.
   if (task->is_fence()) {
     for (auto it = tasks_.rbegin(), last = tasks_.rend(); it != last; ++it) {
@@ -125,8 +87,8 @@ void Executor::add_task_(std::unique_ptr<Task> task) {
       }
     }
   }
+
   // add task.
-  task->set_observer(this);
   tasks_.emplace_back(std::move(task));
 
 #if defined(_DEBUG)

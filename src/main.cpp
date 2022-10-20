@@ -21,11 +21,18 @@ struct DestroyRenderer {
 using RendererPtr = std::unique_ptr<SDL_Renderer, DestroyRenderer>;
 
 void update_int(int* i) {
+  auto id = SDL_ThreadID();
+  static_assert(sizeof(id) == 4);
   auto pre_i = *i;
   *i += 10;
-  SDL_Log("update: %d -> %d", pre_i, *i);
+  SDL_Log("update: %d -> %d : %u", pre_i, *i, id);
+  SDL_Delay(1);
 }
-void read_int(const int* i) { SDL_Log("read: %d", *i); }
+void read_int(const int* i) {
+  auto id = SDL_ThreadID();
+  SDL_Log("read: %d : %u", *i, id);
+  SDL_Delay(1);
+}
 
 }  // namespace
 
@@ -33,6 +40,9 @@ int main(int /*argc*/, char* /*argv*/[]) {
   const char* TITLE = "Game";
   const int SCREEN_WIDTH = 16 * 60;
   const int SCREEN_HEIGHT = 9 * 60;
+
+  auto id = SDL_ThreadID();
+  SDL_Log("main thread: %u", id);
 
   sai::task::Context context;
   auto tasks = context.add<sai::task::Executor>("TaskExecutor");
@@ -43,10 +53,14 @@ int main(int /*argc*/, char* /*argv*/[]) {
   tasks->add_task("1 update int", update_int);
   tasks->add_task("2 read int", read_int);
   tasks->add_task("3 read int", read_int);
-  tasks->add_task("4 update int", update_int);
+  tasks->add_task("4 read int", read_int);
   tasks->add_task("5 read int", read_int);
-  tasks->add_task("6 read int", read_int);
-  tasks->add_task("7 update int", update_int);
+  tasks->add_task("6 update int", update_int);
+  tasks->add_task("7 read int", read_int);
+  tasks->add_task("8 read int", read_int);
+  tasks->add_task("9 read int", read_int);
+  tasks->add_task("10 read int", read_int);
+  tasks->add_task("11 update int", update_int);
 
   tasks->run(&context);
 

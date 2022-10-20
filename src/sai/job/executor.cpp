@@ -70,8 +70,40 @@ void Executor::stop() {
 
 void Executor::submit(std::shared_ptr<Job> job) {
   UniqueLock lock(mutex_.get());
+  job->set_observer(this);
   jobs_.emplace_back(std::move(job));
-  SDL_CondSignal(condition_.get());
+}
+void Executor::kick() { SDL_CondBroadcast(condition_.get()); }
+
+void Executor::join() {
+  do {
+    std::shared_ptr<Job> job;
+    {
+      UniqueLock lock(mutex_.get());
+      bool is_empty = jobs_.empty() && active_job_count_ == 0;
+      if (is_empty) break;
+      auto it = std::find_if(jobs_.begin(), jobs_.end(),
+                             [](auto& job) { return job->can_exec(); });
+      if (it == jobs_.end()) {
+        SDL_CondWait(condition_.get(), mutex_.get());
+        continue;
+      }
+      job = *it;
+      jobs_.erase(it);
+      ++active_job_count_;
+    }
+    job->exec();
+  } while (true);
+}
+
+/*virtual*/ void Executor::on_pre_exec_job(Job*) /*override*/ {}
+/*virtual*/ void Executor::on_post_exec_job(Job* job) /*override*/ {
+  {
+    UniqueLock lock(mutex_.get());
+    job->change_state(Job::State::Done);
+    --active_job_count_;
+  }
+  SDL_CondBroadcast(condition_.get());
 }
 
 const char* Executor::get_thread_name_(SDL_threadID id) const {
@@ -88,12 +120,15 @@ void Executor::exec_jobs_() {
     std::shared_ptr<Job> job;
     {
       UniqueLock lock(mutex_.get());
-      while (!is_stop_ && jobs_.empty()) {
+      auto it = std::find_if(jobs_.begin(), jobs_.end(),
+                             [](auto& job) { return job->can_exec(); });
+      if (it == jobs_.end()) {
         SDL_CondWait(condition_.get(), mutex_.get());
+        continue;
       }
-      if (jobs_.empty()) continue;
-      job = jobs_.front();
-      jobs_.pop_front();
+      job = *it;
+      jobs_.erase(it);
+      ++active_job_count_;
     }
     job->exec();
   }

@@ -13,14 +13,16 @@
 namespace sai::job {
 
 // Executor.
-class Executor : t9::NonMovable {
+class Executor : private t9::NonMovable, public JobObserver {
  private:
   std::string name_;
   std::vector<SDL_Thread*> threads_;
   std::deque<std::shared_ptr<Job>> jobs_;
+  std::size_t active_job_count_ = 0;
   MutexPtr mutex_;
   ConditionPtr condition_;
   volatile bool is_stop_ = false;
+  volatile bool notify_ = false;
 
  public:
   explicit Executor(std::string_view name);
@@ -30,10 +32,14 @@ class Executor : t9::NonMovable {
   void stop();
 
   void submit(std::shared_ptr<Job> job);
-  template <typename F>
-  void submit_func(F f) {
-    submit(std::make_shared<FuncJob>(f));
-  }
+  void kick();
+
+  void join();
+
+ public:
+  // JobObserver.
+  virtual void on_pre_exec_job(Job* job) override;
+  virtual void on_post_exec_job(Job* job) override;
 
  private:
   const char* get_thread_name_(SDL_threadID id) const;

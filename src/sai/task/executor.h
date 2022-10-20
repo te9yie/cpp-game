@@ -15,22 +15,18 @@
 
 namespace sai::task {
 
-class Context;
-
 // Executor.
-class Executor : private t9::NonCopyable, private TaskObserver {
+class Executor : private t9::NonCopyable {
  private:
   job::Executor executor_;
-  std::deque<std::unique_ptr<Task>> tasks_;
-  std::deque<Task*> wait_tasks_;
-  std::deque<Task*> active_tasks_;
+  std::deque<std::shared_ptr<Task>> tasks_;
   MutexPtr mutex_;
   ConditionPtr condition_;
   volatile bool notify_ = false;
 
  public:
   explicit Executor(std::string_view name);
-  virtual ~Executor() override;
+  virtual ~Executor();
 
   bool setup(std::size_t thread_n);
   void tear_down();
@@ -44,18 +40,13 @@ class Executor : private t9::NonCopyable, private TaskObserver {
   void run(const Context* ctx);
 
  private:
-  // TaskObserver.
-  virtual void on_pre_exec_task(Task* task) override;
-  virtual void on_post_exec_task(Task* task) override;
-
- private:
   template <typename F, typename... As>
   void add_task_(std::string_view name, F f, t9::type_list<As...>,
                  const TaskOption& option) {
-    auto task = std::make_unique<FuncTask<As...>>(name, f, option);
+    auto task = std::make_shared<FuncTask<As...>>(name, f, option);
     add_task_(std::move(task));
   }
-  void add_task_(std::unique_ptr<Task> task);
+  void add_task_(std::shared_ptr<Task> task);
 
 #if defined(_DEBUG)
  private:
