@@ -32,13 +32,13 @@ int main(int /*argc*/, char* /*argv*/[]) {
   const int SCREEN_HEIGHT = 9 * 60;
 
   sai::task::Executor tasks;
-  tasks.add_task(update_int);
-  tasks.add_task(read_int);
-  tasks.add_task(read_int);
-  tasks.add_task(update_int);
-  tasks.add_task(read_int);
-  tasks.add_task(read_int);
-  tasks.add_task(update_int);
+  tasks.add_task("update int", update_int);
+  tasks.add_task("read int", read_int);
+  tasks.add_task("read int", read_int);
+  tasks.add_task("update int", update_int);
+  tasks.add_task("read int", read_int);
+  tasks.add_task("read int", read_int);
+  tasks.add_task("update int", update_int);
 
   sai::job::Executor jobs("JobExecutor");
   jobs.start(2);

@@ -6,8 +6,8 @@
 #include <string_view>
 #include <vector>
 
-#include "../threading.h"
 #include "job.h"
+#include "sai/threading.h"
 #include "t9/noncopyable.h"
 
 namespace sai::job {
