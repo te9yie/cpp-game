@@ -16,9 +16,9 @@ int main(int /*argc*/, char* /*argv*/[]) {
   context.add<sai::debug::Gui>();
   context.add<sai::task::ExecutorWork>();
 
-  tasks->add_setup_task(sai::core::init_system);
-  tasks->add_setup_task(sai::video::init_video_system);
-  tasks->add_setup_task(sai::debug::init_gui_system);
+  tasks->add_setup_task("init system", sai::core::init_system);
+  tasks->add_setup_task("init vidoe system", sai::video::init_video_system);
+  tasks->add_setup_task("init gui system", sai::debug::init_gui_system);
 
   using Option = sai::task::TaskOption;
 

@@ -5,6 +5,7 @@
 
 #include "sai/job.h"
 #include "sai/threading.h"
+#include "setup_task.h"
 #include "t9/func_traits.h"
 #include "t9/noncopyable.h"
 #include "task.h"
@@ -38,8 +39,8 @@ class Executor : private t9::NonCopyable {
   void tear_down();
 
   template <typename F>
-  void add_setup_task(F f) {
-    add_setup_task_(f, t9::args_type<F>{});
+  void add_setup_task(std::string_view name, F f) {
+    add_setup_task_(name, f, t9::args_type<F>{});
   }
 
   template <typename F>
@@ -52,8 +53,8 @@ class Executor : private t9::NonCopyable {
 
  private:
   template <typename F, typename... As>
-  void add_setup_task_(F f, t9::type_list<As...>) {
-    auto task = std::make_shared<FuncSetupTask<As...>>(f);
+  void add_setup_task_(std::string_view name, F f, t9::type_list<As...>) {
+    auto task = std::make_shared<FuncSetupTask<As...>>(name, f);
     add_setup_task_(std::move(task));
   }
   void add_setup_task_(std::shared_ptr<SetupTask> task);
