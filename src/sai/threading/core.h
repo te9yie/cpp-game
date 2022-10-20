@@ -20,7 +20,7 @@ struct DestroyCondition {
 using ConditionPtr = std::unique_ptr<SDL_cond, DestroyCondition>;
 
 // UniqueLock.
-class UniqueLock final : t9::NonMovable {
+class UniqueLock final : t9::NonCopyable {
  private:
   SDL_mutex* mutex_ = nullptr;
 

@@ -31,16 +31,22 @@ file(GLOB_RECURSE SOURCES
 	${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 # filter
-file (GLOB T9_SOURCES ${PROJECT_SOURCE_DIR}/src/t9/*)
-source_group(t9 FILES ${T9_SOURCES})
 file (GLOB SAI_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/*)
-source_group(sai FILES ${SAI_SOURCES})
+file (GLOB SAI_CORE_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/core/*)
+file (GLOB SAI_DEBUG_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/debug/*)
 file (GLOB SAI_JOB_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/job/*)
-source_group(sai/job FILES ${SAI_JOB_SOURCES})
 file (GLOB SAI_TASK_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/task/*)
-source_group(sai/task FILES ${SAI_TASK_SOURCES})
 file (GLOB SAI_THREADING_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/threading/*)
+file (GLOB SAI_VIDEO_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/video/*)
+file (GLOB T9_SOURCES ${PROJECT_SOURCE_DIR}/src/t9/*)
+source_group(sai FILES ${SAI_SOURCES})
+source_group(sai/core FILES ${SAI_CORE_SOURCES})
+source_group(sai/debug FILES ${SAI_DEBUG_SOURCES})
+source_group(sai/job FILES ${SAI_JOB_SOURCES})
+source_group(sai/task FILES ${SAI_TASK_SOURCES})
 source_group(sai/threading FILES ${SAI_THREADING_SOURCES})
+source_group(sai/video FILES ${SAI_VIDEO_SOURCES})
+source_group(t9 FILES ${T9_SOURCES})
 
 add_executable(${PROJECT_NAME} WIN32
     ${IMGUI_SOURCES} ${IMGUI_BACKENDS}

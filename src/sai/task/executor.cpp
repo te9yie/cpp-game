@@ -45,14 +45,30 @@ void Executor::tear_down() {
   condition_.reset();
 }
 
-void Executor::run(const Context* ctx) {
-  std::for_each(tasks_.begin(), tasks_.end(), [&](auto& task) {
-    task->set_context(ctx);
-    task->reset_state();
-    executor_.submit(task);
-  });
-  executor_.kick();
-  executor_.join();
+bool Executor::run(const Context* ctx) {
+  for (auto& task : setup_tasks_) {
+    if (!task->exec(ctx)) {
+      return false;
+    }
+  }
+  while (true) {
+    if (auto work = ctx->get<ExecutorWork>()) {
+      if (!work->loop) break;
+    }
+    std::for_each(tasks_.begin(), tasks_.end(), [&](auto& task) {
+      task->set_context(ctx);
+      task->reset_state();
+      executor_.submit(task);
+    });
+    executor_.kick();
+    executor_.join();
+  }
+  return true;
+}
+
+void Executor::add_setup_task_(std::shared_ptr<SetupTask> task) {
+  // add task.
+  setup_tasks_.emplace_back(std::move(task));
 }
 
 void Executor::add_task_(std::shared_ptr<Task> task) {

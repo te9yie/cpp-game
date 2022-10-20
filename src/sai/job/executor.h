@@ -13,7 +13,7 @@
 namespace sai::job {
 
 // Executor.
-class Executor : private t9::NonMovable, public JobObserver {
+class Executor : private t9::NonCopyable, public JobObserver {
  private:
   std::string name_;
   std::vector<SDL_Thread*> threads_;
