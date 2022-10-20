@@ -69,6 +69,8 @@ class Task : private t9::NonCopyable {
   bool reset_state() { return change_state(State::None); }
 
   bool add_dependency(Task* task);
+  const std::deque<Task*>& dependencies() const { return dependencies_; }
+
   bool set_observer(TaskObserver* observer);
 
   const std::string& name() const { return name_; }

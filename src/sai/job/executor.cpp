@@ -15,14 +15,14 @@ bool Executor::start(std::size_t thread_n) {
 
   MutexPtr mutex(SDL_CreateMutex());
   if (!mutex) {
-    SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "[Executor::start] %s",
+    SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "[job::Executor::start] %s",
                  SDL_GetError());
     return false;
   }
 
   ConditionPtr condition(SDL_CreateCond());
   if (!condition) {
-    SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "[Executor::start] %s",
+    SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "[job::Executor::start] %s",
                  SDL_GetError());
     return false;
   }
@@ -34,7 +34,7 @@ bool Executor::start(std::size_t thread_n) {
     std::snprintf(buf, sizeof(buf), "%s_%zu", name_.c_str(), i);
     auto thread = SDL_CreateThread(Executor::thread_func_, buf, this);
     if (!thread) {
-      SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "[Executor::start] %s",
+      SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "[job::Executor::start] %s",
                    SDL_GetError());
       error = true;
       break;

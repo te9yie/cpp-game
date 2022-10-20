@@ -6,7 +6,6 @@
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_sdlrenderer.h"
-#include "sai/job/executor.h"
 #include "sai/task/executor.h"
 
 namespace {
@@ -21,8 +20,12 @@ struct DestroyRenderer {
 };
 using RendererPtr = std::unique_ptr<SDL_Renderer, DestroyRenderer>;
 
-void update_int(int*) {}
-void read_int(const int*) {}
+void update_int(int* i) {
+  auto pre_i = *i;
+  *i += 10;
+  SDL_Log("update: %d -> %d", pre_i, *i);
+}
+void read_int(const int* i) { SDL_Log("read: %d", *i); }
 
 }  // namespace
 
@@ -31,19 +34,21 @@ int main(int /*argc*/, char* /*argv*/[]) {
   const int SCREEN_WIDTH = 16 * 60;
   const int SCREEN_HEIGHT = 9 * 60;
 
-  sai::task::Executor tasks;
-  tasks.add_task("update int", update_int);
-  tasks.add_task("read int", read_int);
-  tasks.add_task("read int", read_int);
-  tasks.add_task("update int", update_int);
-  tasks.add_task("read int", read_int);
-  tasks.add_task("read int", read_int);
-  tasks.add_task("update int", update_int);
+  sai::task::Context context;
+  auto tasks = context.add<sai::task::Executor>("TaskExecutor");
+  tasks->setup(2);
 
-  sai::job::Executor jobs("JobExecutor");
-  jobs.start(2);
+  context.add<int>(10);
 
-  jobs.submit_func([]() { SDL_Log("Hello Job"); });
+  tasks->add_task("1 update int", update_int);
+  tasks->add_task("2 read int", read_int);
+  tasks->add_task("3 read int", read_int);
+  tasks->add_task("4 update int", update_int);
+  tasks->add_task("5 read int", read_int);
+  tasks->add_task("6 read int", read_int);
+  tasks->add_task("7 update int", update_int);
+
+  tasks->run(&context);
 
   if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO) < 0) {
     SDL_LogCritical(SDL_LOG_CATEGORY_SYSTEM, "error: %s", SDL_GetError());
@@ -94,7 +99,10 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
     ImGui::NewFrame();
 
-    ImGui::ShowDemoWindow();
+    // ImGui::ShowDemoWindow();
+    ImGui::Begin("Debug");
+    tasks->render_debug_gui();
+    ImGui::End();
 
     ImGui::Render();
 
