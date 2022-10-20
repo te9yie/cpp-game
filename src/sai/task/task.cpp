@@ -8,11 +8,15 @@ Task::Task(std::string_view name, const ArgsTypeBits& bits,
            const TaskOption& option)
     : name_(name), type_bits_(bits) {
   flags_.set(FLAG_FENCE, option.is_fence);
+  exclusive_thread_id_ = option.exclusive_thread_id;
 }
 
 /*virtual*/ bool Task::on_can_exec() const /*override*/ {
   for (auto task : dependencies_) {
     if (!task->is_state(State::Done)) return false;
+  }
+  if (exclusive_thread_id_ != 0) {
+    if (exclusive_thread_id_ != SDL_ThreadID()) return false;
   }
   return true;
 }

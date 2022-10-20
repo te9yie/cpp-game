@@ -50,17 +50,20 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
   context.add<int>(10);
 
-  tasks->add_task("1 update int", update_int);
+  const auto exclusive_main_thread =
+      sai::task::TaskOption{}.exclusive_this_thread();
+
+  tasks->add_task("1 update int", update_int, exclusive_main_thread);
   tasks->add_task("2 read int", read_int);
   tasks->add_task("3 read int", read_int);
   tasks->add_task("4 read int", read_int);
   tasks->add_task("5 read int", read_int);
-  tasks->add_task("6 update int", update_int);
+  tasks->add_task("6 update int", update_int, exclusive_main_thread);
   tasks->add_task("7 read int", read_int);
   tasks->add_task("8 read int", read_int);
   tasks->add_task("9 read int", read_int);
   tasks->add_task("10 read int", read_int);
-  tasks->add_task("11 update int", update_int);
+  tasks->add_task("11 update int", update_int, exclusive_main_thread);
 
   tasks->run(&context);
 

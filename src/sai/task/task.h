@@ -16,9 +16,14 @@ class Context;
 // TaskOption.
 struct TaskOption {
   bool is_fence = false;
+  SDL_threadID exclusive_thread_id = 0;
 
   TaskOption& set_fence() {
     is_fence = true;
+    return *this;
+  }
+  TaskOption& exclusive_this_thread() {
+    exclusive_thread_id = SDL_ThreadID();
     return *this;
   }
 };
@@ -35,6 +40,7 @@ class Task : private t9::NonCopyable, public job::Job {
   std::string name_;
   ArgsTypeBits type_bits_;
   TaskWork work_;
+  SDL_threadID exclusive_thread_id_ = 0;
   std::bitset<FLAG_MAX> flags_;
   std::deque<Task*> dependencies_;
   const Context* context_ = nullptr;
