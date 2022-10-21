@@ -6,7 +6,7 @@ namespace sai::task {
 
 Task::Task(std::string_view name, const ArgsTypeBits& bits,
            const TaskOption& option)
-    : name_(name), type_bits_(bits) {
+    : job::Job(name), type_bits_(bits) {
   flags_.set(FLAG_FENCE, option.is_fence);
   exclusive_thread_id_ = option.exclusive_thread_id;
 }

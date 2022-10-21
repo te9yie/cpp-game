@@ -37,7 +37,6 @@ class Task : private t9::NonCopyable, public job::Job {
   };
 
  private:
-  std::string name_;
   ArgsTypeBits type_bits_;
   TaskWork work_;
   SDL_threadID exclusive_thread_id_ = 0;
@@ -55,7 +54,6 @@ class Task : private t9::NonCopyable, public job::Job {
   bool add_dependency(Task* task);
   const std::deque<Task*>& dependencies() const { return dependencies_; }
 
-  const std::string& name() const { return name_; }
   const ArgsTypeBits& type_bits() const { return type_bits_; }
   bool is_fence() const { return flags_.test(FLAG_FENCE); }
 

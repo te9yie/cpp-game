@@ -4,6 +4,7 @@
 #include <cstdio>
 
 #include "job.h"
+#include "sai/debug/performance.h"
 
 namespace sai::job {
 
@@ -136,6 +137,8 @@ void Executor::exec_jobs_() {
 
 /*static*/ int Executor::thread_func_(void* p) {
   auto self = static_cast<Executor*>(p);
+  sai::debug::PerformanceProfiler::instance()->setup_thread(
+      self->get_thread_name_(SDL_ThreadID()));
   self->exec_jobs_();
   return 0;
 }

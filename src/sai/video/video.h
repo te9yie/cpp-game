@@ -30,8 +30,8 @@ struct VideoSystem {
 // VideoSettings.
 struct VideoSettings {
   std::string title;
-  int screen_width = 16 * 40;
-  int screen_height = 9 * 40;
+  int screen_width = 16 * 50;
+  int screen_height = 9 * 50;
   Uint32 window_flags = SDL_WINDOW_RESIZABLE;
   Uint32 renderer_flags = SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED;
 };

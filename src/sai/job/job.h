@@ -1,5 +1,7 @@
 #pragma once
 #include <functional>
+#include <string>
+#include <string_view>
 
 namespace sai::job {
 
@@ -25,15 +27,18 @@ class Job {
   };
 
  private:
+  std::string name_;
   State state_ = State::None;
   JobObserver* observer_ = nullptr;
 
  public:
+  explicit Job(std::string_view name) : name_(name) {}
   virtual ~Job() = default;
 
   bool can_exec() const { return on_can_exec(); }
   void exec();
 
+  const std::string& name() const { return name_; }
   bool change_state(State state);
   bool reset_state() { return change_state(State::None); }
   bool is_state(State state) const { return state_ == state; }
@@ -54,7 +59,7 @@ class FuncJob : public Job {
   FuncType func_;
 
  public:
-  FuncJob(const FuncType& f) : func_(f) {}
+  FuncJob(std::string_view name, const FuncType& f) : Job(name), func_(f) {}
 
  protected:
   virtual void on_exec() override { func_(); }

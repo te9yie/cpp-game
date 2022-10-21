@@ -1,8 +1,11 @@
 #include "job.h"
 
+#include "sai/debug/performance.h"
+
 namespace sai::job {
 
 void Job::exec() {
+  PERF_TAG(name_);
   if (observer_) {
     observer_->on_pre_exec_job(this);
   }
