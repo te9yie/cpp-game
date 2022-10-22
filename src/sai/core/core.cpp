@@ -3,6 +3,7 @@
 #include <SDL.h>
 
 #include "imgui_impl_sdl.h"
+#include "sai/task/app.h"
 
 namespace sai::core {
 
@@ -27,6 +28,11 @@ void handle_events(task::ExecutorWork* work, video::VideoSystem* sys) {
       work->loop = false;
     }
   }
+}
+
+void preset_core(task::App* app) {
+  app->add_context<System>();
+  app->add_setup_task(init_system);
 }
 
 }  // namespace sai::core

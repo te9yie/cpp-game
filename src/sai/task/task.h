@@ -2,6 +2,7 @@
 #include <bitset>
 #include <deque>
 #include <functional>
+#include <memory>
 #include <string>
 #include <string_view>
 
@@ -84,5 +85,8 @@ class FuncTask : public Task {
     func_(arg_traits<As>::to(ctx, work)...);
   }
 };
+
+// TaskList.
+using TaskList = std::deque<std::shared_ptr<Task>>;
 
 }  // namespace sai::task
