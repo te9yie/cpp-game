@@ -36,8 +36,14 @@ struct VideoSettings {
   Uint32 renderer_flags = SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED;
 };
 
+// RenderSize.
+struct RenderSize {
+  int w = 0;
+  int h = 0;
+};
+
 bool init_video_system(VideoSystem* sys, const VideoSettings* settings);
-void begin_render(VideoSystem* sys);
+void begin_render(VideoSystem* sys, RenderSize* size);
 void end_render(VideoSystem* sys);
 
 }  // namespace sai::video

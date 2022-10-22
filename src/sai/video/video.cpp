@@ -12,11 +12,7 @@ bool init_video_system(VideoSystem* sys, const VideoSettings* settings) {
     SDL_LogCritical(SDL_LOG_CATEGORY_SYSTEM, "error: %s", SDL_GetError());
     return false;
   }
-  sys->shutdown_system = []() {
-    // clang-format off
-    SDL_QuitSubSystem(SDL_INIT_VIDEO);
-    // clang-format on
-  };
+  sys->shutdown_system = []() { SDL_QuitSubSystem(SDL_INIT_VIDEO); };
 
   WindowPtr window(SDL_CreateWindow(
       settings->title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -39,9 +35,11 @@ bool init_video_system(VideoSystem* sys, const VideoSettings* settings) {
   return true;
 }
 
-void begin_render(VideoSystem* sys) {
-  SDL_SetRenderDrawColor(sys->renderer.get(), 0x12, 0x34, 0x56, 0xff);
-  SDL_RenderClear(sys->renderer.get());
+void begin_render(VideoSystem* sys, RenderSize* size) {
+  auto r = sys->renderer.get();
+  SDL_GetRendererOutputSize(r, &size->w, &size->h);
+  SDL_SetRenderDrawColor(r, 0x12, 0x34, 0x56, 0xff);
+  SDL_RenderClear(r);
 }
 
 void end_render(VideoSystem* sys) { SDL_RenderPresent(sys->renderer.get()); }

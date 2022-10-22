@@ -12,6 +12,6 @@ struct Gui {
 bool init_gui_system(Gui* gui, const video::VideoSystem* video);
 void begin_frame(Gui*);
 void end_frame(Gui*);
-void render_gui(Gui*);
+void render_gui(video::VideoSystem* video, Gui*);
 
 }  // namespace sai::debug

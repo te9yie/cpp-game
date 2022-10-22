@@ -28,7 +28,8 @@ void begin_frame(Gui*) {
   ImGui::NewFrame();
 }
 void end_frame(Gui*) { ImGui::Render(); }
-void render_gui(Gui*) {
+
+void render_gui(video::VideoSystem*, Gui*) {
   ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
 }
 

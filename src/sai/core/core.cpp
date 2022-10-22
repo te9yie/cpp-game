@@ -11,11 +11,7 @@ bool init_system(System* sys) {
     SDL_LogCritical(SDL_LOG_CATEGORY_SYSTEM, "error: %s", SDL_GetError());
     return false;
   }
-  sys->shutdown_system = []() {
-    //clang-format off
-    SDL_Quit();
-    //clang-format on
-  };
+  sys->shutdown_system = []() { SDL_Quit(); };
   return true;
 }
 

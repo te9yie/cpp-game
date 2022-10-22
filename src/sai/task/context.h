@@ -1,8 +1,6 @@
 #pragma once
-#include <cstdint>
-#include <list>
 #include <memory>
-#include <unordered_map>
+#include <vector>
 
 #include "t9/noncopyable.h"
 
@@ -11,58 +9,51 @@ namespace sai::task {
 // Context.
 class Context final : private t9::NonCopyable {
  private:
-  // Storage.
-  struct Storage {
-    virtual ~Storage() = default;
+  // EntryBase.
+  struct EntryBase {
+    virtual ~EntryBase() = default;
   };
   template <typename T>
-  struct TStorage : Storage {
+  struct Entry : EntryBase {
     T x;
     template <typename... Args>
-    TStorage(Args&&... args) : x(std::forward<Args>(args)...) {}
+    Entry(Args&&... args) : x(std::forward<Args>(args)...) {}
   };
 
   // type2index.
   template <typename T>
   struct type2index {
-    static std::uintptr_t index() {
-      static int i = 0;
-      return reinterpret_cast<std::uintptr_t>(&i);
-    }
+    static inline std::size_t index = 0;
   };
 
  public:
-  std::list<std::unique_ptr<Storage>> storage_;
-  std::unordered_map<std::uintptr_t, Storage*> index_;
+  std::vector<std::unique_ptr<EntryBase>> storage_;
 
  public:
-  ~Context() { clear(); }
+  ~Context() {
+    for (auto it = storage_.rbegin(), last = storage_.rend(); it != last;
+         ++it) {
+      it->reset();
+    }
+  }
 
   template <typename T, typename... Args>
   T* add(Args&&... args) {
-    auto i = type2index<T>::index();
-    if (auto it = index_.find(i); it != index_.end()) return nullptr;
-    auto s = std::make_unique<TStorage<T>>(std::forward<Args>(args)...);
-    auto p = &s->x;
-    index_.emplace(i, s.get());
-    storage_.emplace_back(std::move(s));
+    auto i = type2index<T>::index;
+    if (i != 0) return nullptr;
+    auto e = std::make_unique<Entry<T>>(std::forward<Args>(args)...);
+    auto p = &e->x;
+    storage_.emplace_back(std::move(e));
+    type2index<T>::index = storage_.size();
     return p;
   }
 
   template <typename T>
   T* get() const {
-    auto i = type2index<T>::index();
-    auto it = index_.find(i);
-    if (it == index_.end()) return nullptr;
-    auto s = static_cast<TStorage<T>*>(it->second);
-    return &s->x;
-  }
-
-  void clear() {
-    while (!storage_.empty()) {
-      storage_.pop_back();
-    }
-    index_.clear();
+    auto i = type2index<T>::index;
+    if (i == 0) return nullptr;
+    auto e = static_cast<Entry<T>*>(storage_[i - 1].get());
+    return &e->x;
   }
 };
 
