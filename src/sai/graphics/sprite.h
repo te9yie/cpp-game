@@ -3,8 +3,9 @@
 
 #include <memory>
 
+#include "../task/fwd.h"
+#include "../video/video.h"
 #include "material.h"
-#include "sai/video/video.h"
 #include "t9/handle.h"
 
 namespace sai::graphics {
@@ -20,5 +21,7 @@ using SpriteHandle = t9::Handle<Sprite>;
 using SpriteStorage = t9::HandleStorage<Sprite>;
 
 void render_sprites(video::VideoSystem* sys, SpriteStorage* sprites);
+
+void preset_graphics(task::App* app);
 
 }  // namespace sai::graphics

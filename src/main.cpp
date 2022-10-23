@@ -61,15 +61,12 @@ void render_debug_gui(sai::debug::Gui*, const sai::core::Frame* frame,
 int main(int /*argc*/, char* /*argv*/[]) {
   sai::task::App app;
 
-  app.add_context<sai::graphics::SpriteStorage>();
   app.add_context<Ball>();
 
   app.add_setup_task(create_ball);
 
   app.add_task("update ball", update_ball);
   app.add_task("render debug gui", render_debug_gui);
-  app.add_task_in_phase<sai::task::RenderPhase>("render sprites",
-                                                sai::graphics::render_sprites);
 
   return app.run() ? EXIT_SUCCESS : EXIT_FAILURE;
 }

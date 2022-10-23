@@ -5,6 +5,7 @@
 
 #include "../core/core.h"
 #include "../debug/gui.h"
+#include "../graphics/sprite.h"
 #include "../video/video.h"
 #include "executor.h"
 
@@ -25,6 +26,7 @@ App::App() {
   preset(core::preset_core);
   preset(preset_executor);
   preset(video::preset_video);
+  preset(graphics::preset_graphics);
   preset(debug::preset_debug_gui);
 }
 
