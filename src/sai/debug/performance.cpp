@@ -65,7 +65,7 @@ void PerformanceProfiler::end_tag(std::size_t start_id) {
   it->second->tags[index].emplace_back(tag);
 }
 
-void PerformanceProfiler::render_debug_gui() {
+void PerformanceProfiler::render_debug_gui() const {
   auto freq = SDL_GetPerformanceFrequency();
   auto index = read_index_();
   auto frame_count = frame_count_[index];

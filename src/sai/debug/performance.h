@@ -60,7 +60,7 @@ class PerformanceProfiler : public t9::Singleton<PerformanceProfiler> {
   void end_tag(std::size_t start_id);
 
  public:
-  void render_debug_gui();
+  void render_debug_gui() const;
 
  private:
   std::size_t read_index_() const { return use_back_buffer_ ? 0u : 1u; }

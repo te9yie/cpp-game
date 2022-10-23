@@ -42,6 +42,20 @@ void update_ball(Ball* ball, const sai::graphics::SpriteStorage* sprites,
   sprite->rect.y = ball->y - 5;
 }
 
+void render_debug_gui(sai::debug::Gui*, const sai::core::Frame* frame,
+                      const sai::task::PhaseReference* phases,
+                      const sai::debug::PerformanceProfiler* profiler) {
+  ImGui::Begin("Debug");
+  sai::core::render_debug_gui(frame);
+  if (ImGui::CollapsingHeader("Tasks")) {
+    ImGui::Indent();
+    sai::task::render_debug_gui(phases);
+    ImGui::Unindent();
+  }
+  profiler->render_debug_gui();
+  ImGui::End();
+}
+
 }  // namespace
 
 int main(int /*argc*/, char* /*argv*/[]) {
@@ -53,30 +67,7 @@ int main(int /*argc*/, char* /*argv*/[]) {
   app.add_setup_task(create_ball);
 
   app.add_task("update ball", update_ball);
-  app.add_task("render debug gui",
-               [](sai::debug::Gui*, sai::debug::PerformanceProfiler* profiler,
-                  const sai::core::Frame* frame,
-                  const sai::task::PhaseReference* phases) {
-                 ImGui::Begin("Debug");
-
-                 auto delta = frame->start_count - frame->last_start_count;
-                 auto delta_ms = delta * 1000 / frame->frequency;
-                 ImGui::Text("delta (count): %lu", delta);
-                 ImGui::Text("delta (ms): %lu", delta_ms);
-                 ImGui::Text("frame count: %lu", frame->frame_count);
-                 ImGui::Text("delta: %f", frame->delta());
-
-                 ImGui::Separator();
-
-                 if (ImGui::CollapsingHeader("Tasks")) {
-                   ImGui::Indent();
-                   sai::task::render_debug_gui(phases);
-                   ImGui::Unindent();
-                 }
-                 profiler->render_debug_gui();
-
-                 ImGui::End();
-               });
+  app.add_task("render debug gui", render_debug_gui);
   app.add_task_in_phase<sai::task::RenderPhase>("render sprites",
                                                 sai::graphics::render_sprites);
 

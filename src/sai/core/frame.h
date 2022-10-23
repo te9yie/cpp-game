@@ -18,5 +18,6 @@ struct Frame {
 };
 
 void tick_frame(Frame* frame);
+void render_debug_gui(const Frame* frame);
 
 }  // namespace sai::core
