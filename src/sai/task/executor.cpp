@@ -14,7 +14,6 @@ bool init_executor(job::Executor* executor, const ExecutorSettings* settings) {
 
 void preset_executor(App* app) {
   app->add_context<job::Executor>("TaskExecutor");
-  app->add_context<ExecutorWork>();
   app->add_setup_task(init_executor);
 }
 

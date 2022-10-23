@@ -9,11 +9,6 @@ struct ExecutorSettings {
   std::size_t thread_n = 2;
 };
 
-// ExecutorWork.
-struct ExecutorWork {
-  bool loop = true;
-};
-
 bool init_executor(job::Executor* executor, const ExecutorSettings* settings);
 void preset_executor(App* app);
 

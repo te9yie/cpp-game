@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "args.h"
+#include "context.h"
 
 namespace sai::task {
 
@@ -47,8 +48,9 @@ class EventSubject : public Event {
  public:
   template <class... Args>
   void notify(Args&&... args) {
-    auto e = std::make_unique<EventData<T>>(std::forward<Args>(args)...);
-    events_[index_].emplace_back(count_++, std::move(e));
+    auto e =
+        std::make_unique<EventData<T>>(count_++, std::forward<Args>(args)...);
+    events_[index_].emplace_back(std::move(e));
   }
 
   const EventData<T>* get_event(std::size_t index) const {
@@ -56,15 +58,15 @@ class EventSubject : public Event {
     if (n == 0) return nullptr;
     if (n <= events_[index_].size()) {
       const auto i = index - start_index_[index_];
-      return &events_[index_][i];
+      return events_[index_][i].get();
     } else {
       auto last_index = 1 - index_;
       auto i = index - start_index_[last_index];
       const auto& data = events_[last_index];
       if (i < data.size()) {
-        return &data[i].get();
+        return data[i].get();
       } else if (!data.empty()) {
-        return &data[0].get();
+        return data[0].get();
       }
     }
     return nullptr;
@@ -82,6 +84,8 @@ template <typename T>
 struct EventWriter {
   EventSubject<T>* subject = nullptr;
 
+  EventWriter(const Context* ctx) : subject(ctx->get<EventSubject<T>>()) {}
+
   template <class... Args>
   void notify(Args&&... args) {
     subject->notify<Args...>(std::forward<Args>(args)...);
@@ -91,12 +95,19 @@ struct EventWriter {
 // EventReader.
 template <typename T>
 struct EventReader {
-  EventSubject<T>* subject = nullptr;
-  std::size_t* index = 0;
+ private:
+  EventSubject<T>* subject_ = nullptr;
+  std::size_t* index_ = nullptr;
+
+ public:
+  EventReader(const Context* ctx, std::size_t* i)
+      : subject_(ctx->get<EventSubject<T>>()), index_(i) {}
 
   template <typename F>
   void each(F f) {
-    for (auto e = subject->get_event(*index); e; *index = e->index + 1) {
+    for (auto e = subject_->get_event(*index_); e;
+         e = subject_->get_event(*index_)) {
+      *index_ = e->index + 1;
       f(e->x);
     }
   }
@@ -108,9 +119,8 @@ struct arg_traits<EventWriter<T>> {
   static void set_type_bits(ArgsTypeBits* bits) {
     bits->set_write<EventSubject<T>>();
   }
-  static EventWriter<T> to(const Context* ctx, TaskWork* work) {
-    auto s = ctx->get<EventSubject<T>>();
-    return EventWriter<T>{s};
+  static EventWriter<T> to(const Context* ctx, TaskWork*) {
+    return EventWriter<T>(ctx);
   }
 };
 
@@ -120,12 +130,11 @@ struct arg_traits<EventReader<T>> {
     bits->set_read<EventSubject<T>>();
   }
   static EventReader<T> to(const Context* ctx, TaskWork* work) {
-    auto s = ctx->get<EventSubject<T>>();
     auto o = work->get<EventObserver<T>>();
     if (!o) {
       o = work->add<EventObserver<T>>();
     }
-    return EventReader<T>{s, &o->index};
+    return EventReader<T>(ctx, &o->index);
   }
 };
 

@@ -20,7 +20,7 @@ class App : private t9::NonCopyable {
  private:
   Context context_;
   std::vector<std::unique_ptr<SetupTask>> setup_tasks_;
-  std::vector<std::unique_ptr<Event>> events_;
+  std::vector<Event*> events_;
   std::list<std::unique_ptr<Phase>> phases_;
 
  public:
@@ -38,8 +38,8 @@ class App : private t9::NonCopyable {
 
   template <typename T>
   void add_event() {
-    auto e = std::make_unique<EventSubject<T>>();
-    events_.emplace_back(std::move(e));
+    auto e = add_context<EventSubject<T>>();
+    events_.emplace_back(e);
   }
 
   template <typename F>
