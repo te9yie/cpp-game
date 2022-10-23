@@ -1,11 +1,12 @@
 #pragma once
+#include <list>
 #include <memory>
 #include <string_view>
 #include <vector>
 
 #include "context.h"
 #include "event.h"
-#include "runner.h"
+#include "phase.h"
 #include "setup_task.h"
 #include "t9/func_traits.h"
 #include "t9/noncopyable.h"
@@ -18,9 +19,9 @@ namespace sai::task {
 class App : private t9::NonCopyable {
  private:
   Context context_;
-  std::vector<std::unique_ptr<Event>> events_;
   std::vector<std::unique_ptr<SetupTask>> setup_tasks_;
-  std::vector<std::shared_ptr<Task>> tasks_;
+  std::vector<std::unique_ptr<Event>> events_;
+  std::list<std::unique_ptr<Phase>> phase_;
 
  public:
   App();
@@ -49,7 +50,15 @@ class App : private t9::NonCopyable {
   template <typename F>
   void add_task(std::string_view name, F f,
                 const TaskOption& option = TaskOption{}) {
-    add_task_(name, f, t9::args_type<F>{}, option);
+    add_task_(phase_index<UpdatePhase>::index(), name, f, t9::args_type<F>{},
+              option);
+  }
+
+  template <typename PhaseTag, typename F>
+  void add_task_in_phase(std::string_view name, F f,
+                         const TaskOption& option = TaskOption{}) {
+    add_task_(phase_index<PhaseTag>::index(), name, f, t9::args_type<F>{},
+              option);
   }
 
   bool run();
@@ -62,13 +71,15 @@ class App : private t9::NonCopyable {
   }
 
   template <typename F, typename... As>
-  void add_task_(std::string_view name, F f, t9::type_list<As...>,
-                 const TaskOption& option) {
+  void add_task_(phase_index_type phase, std::string_view name, F f,
+                 t9::type_list<As...>, const TaskOption& option) {
     auto task = std::make_shared<FuncTask<As...>>(name, f, option);
-    tasks_.emplace_back(std::move(task));
+    add_task_(phase, std::move(task));
   }
 
-  void setup_dependencies_();
+  void add_task_(phase_index_type index, std::shared_ptr<Task> task);
+
+  void setup_dependencies_(Phase* phase);
 };
 
 }  // namespace sai::task

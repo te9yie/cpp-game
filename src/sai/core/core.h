@@ -1,11 +1,6 @@
 #pragma once
-#include "sai/task/executor.h"
-#include "sai/video/video.h"
+#include "../task/fwd.h"
 #include "t9/defer.h"
-
-namespace sai::task {
-class App;
-}
 
 namespace sai::core {
 
@@ -15,8 +10,6 @@ struct System {
 };
 
 bool init_system(System* sys);
-void handle_events(task::ExecutorWork* work, video::VideoSystem* sys);
-
 void preset_core(task::App* app);
 
 }  // namespace sai::core

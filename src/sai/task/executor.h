@@ -1,4 +1,5 @@
 #pragma once
+#include "fwd.h"
 #include "sai/job/executor.h"
 
 namespace sai::task {
@@ -14,8 +15,6 @@ struct ExecutorWork {
 };
 
 bool init_executor(job::Executor* executor, const ExecutorSettings* settings);
-
-class App;
 void preset_executor(App* app);
 
 }  // namespace sai::task

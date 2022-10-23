@@ -1,5 +1,10 @@
 #include "video.h"
 
+#include "../debug/gui.h"
+#include "../task/app.h"
+#include "../task/executor.h"
+#include "imgui_impl_sdl.h"
+
 namespace sai::video {
 
 bool init_video_system(VideoSystem* sys, const VideoSettings* settings) {
@@ -35,6 +40,20 @@ bool init_video_system(VideoSystem* sys, const VideoSettings* settings) {
   return true;
 }
 
+void handle_events(task::ExecutorWork* work, VideoSystem* sys, debug::Gui*) {
+  SDL_Event e;
+  while (SDL_PollEvent(&e)) {
+    ImGui_ImplSDL2_ProcessEvent(&e);
+    if (e.type == SDL_QUIT) {
+      work->loop = false;
+    }
+    if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_CLOSE &&
+        e.window.windowID == SDL_GetWindowID(sys->window.get())) {
+      work->loop = false;
+    }
+  }
+}
+
 void begin_render(VideoSystem* sys, RenderSize* size) {
   auto r = sys->renderer.get();
   SDL_GetRendererOutputSize(r, &size->w, &size->h);
@@ -43,5 +62,19 @@ void begin_render(VideoSystem* sys, RenderSize* size) {
 }
 
 void end_render(VideoSystem* sys) { SDL_RenderPresent(sys->renderer.get()); }
+
+void preset_video(task::App* app) {
+  app->add_context<VideoSystem>();
+  app->add_context<RenderSize>();
+
+  app->add_setup_task(init_video_system);
+  app->add_task_in_phase<task::PreUpdatePhase>(
+      "handle events", handle_events,
+      task::TaskOption().exclusive_this_thread().fence());
+  app->add_task_in_phase<task::PreRenderPhase>("== begin render", begin_render);
+  app->add_task_in_phase<task::PostRenderPhase>(
+      "== end render", end_render,
+      task::TaskOption().exclusive_this_thread().fence());
+}
 
 }  // namespace sai::video

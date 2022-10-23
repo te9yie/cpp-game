@@ -4,6 +4,8 @@
 #include <memory>
 #include <string>
 
+#include "../debug/fwd.h"
+#include "../task/fwd.h"
 #include "t9/defer.h"
 
 namespace sai::video {
@@ -43,7 +45,9 @@ struct RenderSize {
 };
 
 bool init_video_system(VideoSystem* sys, const VideoSettings* settings);
+void handle_events(task::ExecutorWork* work, VideoSystem* sys, debug::Gui*);
 void begin_render(VideoSystem* sys, RenderSize* size);
 void end_render(VideoSystem* sys);
+void preset_video(task::App* app);
 
 }  // namespace sai::video

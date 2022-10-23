@@ -1,6 +1,8 @@
 #pragma once
 #include <SDL.h>
 
+#include "../task/fwd.h"
+
 namespace sai::core {
 
 // Frame.
