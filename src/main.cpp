@@ -1,14 +1,11 @@
 #include <SDL.h>
 
 #include "imgui.h"
-#include "sai/core/core.h"
 #include "sai/core/frame.h"
 #include "sai/debug/gui.h"
 #include "sai/debug/performance.h"
 #include "sai/graphics/sprite.h"
 #include "sai/task/app.h"
-#include "sai/task/executor.h"
-#include "sai/video/video.h"
 
 namespace {
 
