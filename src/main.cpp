@@ -6,6 +6,7 @@
 #include "sai/debug/performance.h"
 #include "sai/graphics/sprite.h"
 #include "sai/task/app.h"
+#include "sai/task/phase.h"
 
 namespace {
 
@@ -54,7 +55,8 @@ int main(int /*argc*/, char* /*argv*/[]) {
   app.add_task("update ball", update_ball);
   app.add_task("render debug gui",
                [](sai::debug::Gui*, sai::debug::PerformanceProfiler* profiler,
-                  const sai::core::Frame* frame) {
+                  const sai::core::Frame* frame,
+                  const sai::task::PhaseReference* phases) {
                  ImGui::Begin("Debug");
 
                  auto delta = frame->start_count - frame->last_start_count;
@@ -66,6 +68,11 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
                  ImGui::Separator();
 
+                 if (ImGui::CollapsingHeader("Tasks")) {
+                   ImGui::Indent();
+                   sai::task::render_debug_gui(phases);
+                   ImGui::Unindent();
+                 }
                  profiler->render_debug_gui();
 
                  ImGui::End();

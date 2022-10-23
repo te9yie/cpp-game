@@ -21,7 +21,7 @@ class App : private t9::NonCopyable {
   Context context_;
   std::vector<std::unique_ptr<SetupTask>> setup_tasks_;
   std::vector<std::unique_ptr<Event>> events_;
-  std::list<std::unique_ptr<Phase>> phase_;
+  std::list<std::unique_ptr<Phase>> phases_;
 
  public:
   App();

@@ -52,7 +52,7 @@ void preset_debug_gui(task::App* app) {
   app->add_task_in_phase<task::PreUpdatePhase>("-- begin debug gui",
                                                begin_frame);
   app->add_task_in_phase<task::PostUpdatePhase>("-- end debug gui", end_frame);
-  app->add_task_in_phase<task::RenderPhase>("render debug gui", render_gui);
+  app->add_task_in_phase<task::PostRenderPhase>("render debug gui", render_gui);
 }
 
 }  // namespace sai::debug

@@ -11,14 +11,16 @@
 namespace sai::task {
 
 App::App() {
-  phase_.emplace_back(make_phase<FirstPhase>());
-  phase_.emplace_back(make_phase<PreUpdatePhase>());
-  phase_.emplace_back(make_phase<UpdatePhase>());
-  phase_.emplace_back(make_phase<PostUpdatePhase>());
-  phase_.emplace_back(make_phase<PreRenderPhase>());
-  phase_.emplace_back(make_phase<RenderPhase>());
-  phase_.emplace_back(make_phase<PostRenderPhase>());
-  phase_.emplace_back(make_phase<LastPhase>());
+  phases_.emplace_back(make_phase<FirstPhase>("First"));
+  phases_.emplace_back(make_phase<PreUpdatePhase>("PreUpdate"));
+  phases_.emplace_back(make_phase<UpdatePhase>("Update"));
+  phases_.emplace_back(make_phase<PostUpdatePhase>("PostUpdate"));
+  phases_.emplace_back(make_phase<PreRenderPhase>("PreRender"));
+  phases_.emplace_back(make_phase<RenderPhase>("Render"));
+  phases_.emplace_back(make_phase<PostRenderPhase>("PostRender"));
+  phases_.emplace_back(make_phase<LastPhase>("Last"));
+
+  add_context<PhaseReference>(PhaseReference{&phases_});
 
   preset(core::preset_core);
   preset(preset_executor);
@@ -27,7 +29,7 @@ App::App() {
 }
 
 bool App::run() {
-  std::for_each(phase_.begin(), phase_.end(),
+  std::for_each(phases_.begin(), phases_.end(),
                 [this](auto& phase) { setup_dependencies_(phase.get()); });
   for (auto& task : setup_tasks_) {
     if (!task->exec(&context_)) {
@@ -39,7 +41,7 @@ bool App::run() {
     if (auto work = context_.get<ExecutorWork>()) {
       if (!work->loop) break;
     }
-    std::for_each(phase_.begin(), phase_.end(), [&](auto& phase) {
+    std::for_each(phases_.begin(), phases_.end(), [&](auto& phase) {
       std::for_each(phase->tasks.begin(), phase->tasks.end(), [&](auto& task) {
         task->set_context(&context_);
         task->reset_state();
@@ -53,10 +55,10 @@ bool App::run() {
 }
 
 void App::add_task_(phase_index_type index, std::shared_ptr<Task> task) {
-  auto it = std::find_if(phase_.begin(), phase_.end(), [index](auto& phase) {
+  auto it = std::find_if(phases_.begin(), phases_.end(), [index](auto& phase) {
     return phase->index == index;
   });
-  assert(it != phase_.end() && "not found phase.");
+  assert(it != phases_.end() && "not found phase.");
   (*it)->tasks.emplace_back(std::move(task));
 }
 

@@ -1,6 +1,9 @@
 #pragma once
 #include <cstdint>
+#include <list>
 #include <memory>
+#include <string>
+#include <string_view>
 #include <vector>
 
 #include "task.h"
@@ -30,14 +33,24 @@ struct phase_index {
 
 // Phase.
 struct Phase {
+  std::string name;
   phase_index_type index;
   std::vector<std::shared_ptr<Task>> tasks;
 };
 
 // make_phase.
 template <typename T>
-inline std::unique_ptr<Phase> make_phase() {
-  return std::make_unique<Phase>(Phase{phase_index<T>::index()});
+inline std::unique_ptr<Phase> make_phase(std::string_view name) {
+  std::string phase_name(name);
+  return std::make_unique<Phase>(
+      Phase{std::move(phase_name), phase_index<T>::index()});
 }
+
+// PhaseReference.
+struct PhaseReference {
+  std::list<std::unique_ptr<Phase>>* phases = nullptr;
+};
+
+void render_debug_gui(const PhaseReference* ref);
 
 }  // namespace sai::task

@@ -21,7 +21,7 @@ void preset_core(task::App* app) {
   app->add_context<System>();
   app->add_context<Frame>();
   app->add_setup_task(init_system);
-  app->add_task_in_phase<task::PreUpdatePhase>("tick frame", tick_frame);
+  app->add_task_in_phase<task::FirstPhase>("tick frame", tick_frame);
 }
 
 }  // namespace sai::core
