@@ -127,8 +127,8 @@ void PerformanceProfiler::render_debug_gui() const {
           auto end_us = count2us(tag.end.count - start_count);
           auto depth = tag_stack.size();
 
-          auto name_hash = t9::fnv1a(start_tag.start.name,
-                                     std::strlen(start_tag.start.name));
+          auto name_hash = t9::fxhash(start_tag.start.name,
+                                      std::strlen(start_tag.start.name));
           auto h = 1.0f * name_hash / std::numeric_limits<std::uint32_t>::max();
           auto rgb = t9::hsv2rgb(h, 0.95f, 0.95f);
           auto p0 =
