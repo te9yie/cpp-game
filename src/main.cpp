@@ -1,3 +1,8 @@
+#if defined(_MSC_VER)
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#endif
+
 #include <SDL.h>
 
 #include <algorithm>
@@ -65,6 +70,10 @@ void render_debug_gui(sai::debug::Gui*, const sai::core::Frame* frame,
 }  // namespace
 
 int main(int /*argc*/, char* /*argv*/[]) {
+#if defined(_MSC_VER)
+  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+
   sai::task::App app;
 
   app.add_context<Ball>();
