@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <cstdio>
 
+#include "../debug/performance.h"
 #include "job.h"
-#include "sai/debug/performance.h"
 
 namespace sai::job {
 
@@ -14,14 +14,14 @@ namespace sai::job {
 bool Executor::start(std::size_t thread_n) {
   if (!threads_.empty()) return false;
 
-  MutexPtr mutex(SDL_CreateMutex());
+  sync::MutexPtr mutex(SDL_CreateMutex());
   if (!mutex) {
     SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "[job::Executor::start] %s",
                  SDL_GetError());
     return false;
   }
 
-  ConditionPtr condition(SDL_CreateCond());
+  sync::ConditionPtr condition(SDL_CreateCond());
   if (!condition) {
     SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "[job::Executor::start] %s",
                  SDL_GetError());
@@ -70,7 +70,7 @@ void Executor::stop() {
 }
 
 void Executor::submit(std::shared_ptr<Job> job) {
-  UniqueLock lock(mutex_.get());
+  sync::UniqueLock lock(mutex_.get());
   job->set_observer(this);
   jobs_.emplace_back(std::move(job));
 }
@@ -80,7 +80,7 @@ void Executor::join() {
   do {
     std::shared_ptr<Job> job;
     {
-      UniqueLock lock(mutex_.get());
+      sync::UniqueLock lock(mutex_.get());
       bool is_empty = jobs_.empty() && active_job_count_ == 0;
       if (is_empty) break;
       auto it = std::find_if(jobs_.begin(), jobs_.end(),
@@ -100,7 +100,7 @@ void Executor::join() {
 /*virtual*/ void Executor::on_pre_exec_job(Job*) /*override*/ {}
 /*virtual*/ void Executor::on_post_exec_job(Job* job) /*override*/ {
   {
-    UniqueLock lock(mutex_.get());
+    sync::UniqueLock lock(mutex_.get());
     job->change_state(Job::State::Done);
     --active_job_count_;
   }
@@ -120,7 +120,7 @@ void Executor::exec_jobs_() {
   while (!is_stop_) {
     std::shared_ptr<Job> job;
     {
-      UniqueLock lock(mutex_.get());
+      sync::UniqueLock lock(mutex_.get());
       auto it = std::find_if(jobs_.begin(), jobs_.end(),
                              [](auto& job) { return job->can_exec(); });
       if (it == jobs_.end()) {

@@ -1,4 +1,6 @@
 #pragma once
+#include <SDL.h>
+
 #include <bitset>
 #include <deque>
 #include <functional>
@@ -6,8 +8,8 @@
 #include <string>
 #include <string_view>
 
+#include "../job/job.h"
 #include "args.h"
-#include "sai/job.h"
 #include "t9/noncopyable.h"
 
 namespace sai::task {

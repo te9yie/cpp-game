@@ -6,8 +6,9 @@
 #include <string_view>
 #include <vector>
 
+#include "../sync/condition.h"
+#include "../sync/mutex.h"
 #include "job.h"
-#include "sai/threading.h"
 #include "t9/noncopyable.h"
 
 namespace sai::job {
@@ -19,8 +20,8 @@ class Executor : private t9::NonCopyable, public JobObserver {
   std::vector<SDL_Thread*> threads_;
   std::deque<std::shared_ptr<Job>> jobs_;
   std::size_t active_job_count_ = 0;
-  MutexPtr mutex_;
-  ConditionPtr condition_;
+  sync::MutexPtr mutex_;
+  sync::ConditionPtr condition_;
   volatile bool is_stop_ = false;
   volatile bool notify_ = false;
 
