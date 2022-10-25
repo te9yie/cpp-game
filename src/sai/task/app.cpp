@@ -32,7 +32,7 @@ App::App() {
 
 bool App::run() {
   std::for_each(phases_.begin(), phases_.end(),
-                [this](auto& phase) { setup_dependencies_(phase.get()); });
+                [this](auto& phase) { phase->setup_task_dependencies(); });
   for (auto& task : setup_tasks_) {
     if (!task->exec(&context_)) {
       return false;
@@ -60,49 +60,6 @@ void App::add_task_(phase_index_type index, std::shared_ptr<Task> task) {
   });
   assert(it != phases_.end() && "not found phase.");
   (*it)->tasks.emplace_back(std::move(task));
-}
-
-void App::setup_dependencies_(Phase* phase) {
-  for (auto it = phase->tasks.begin(), it_end = phase->tasks.end();
-       it != it_end; ++it) {
-    auto task = it->get();
-    if (task->is_fence()) {
-      for (auto r_it = std::reverse_iterator<decltype(it)>(it),
-                r_it_end = phase->tasks.rend();
-           r_it != r_it_end; ++r_it) {
-        task->add_dependency(r_it->get());
-        if ((*r_it)->is_fence()) break;
-      }
-    } else {
-      const auto& bits = task->type_bits();
-      for (auto i : bits.writes) {
-        for (auto r_it = std::reverse_iterator<decltype(it)>(it),
-                  r_it_end = phase->tasks.rend();
-             r_it != r_it_end; ++r_it) {
-          if ((*r_it)->is_fence()) {
-            task->add_dependency(r_it->get());
-            break;
-          }
-          if ((*r_it)->type_bits().is_conflict_write(i)) {
-            task->add_dependency(r_it->get());
-          }
-        }
-      }
-      for (auto i : bits.reads) {
-        for (auto r_it = std::reverse_iterator<decltype(it)>(it),
-                  r_it_end = phase->tasks.rend();
-             r_it != r_it_end; ++r_it) {
-          if ((*r_it)->is_fence()) {
-            task->add_dependency(r_it->get());
-            break;
-          }
-          if ((*r_it)->type_bits().is_conflict_read(i)) {
-            task->add_dependency(r_it->get());
-          }
-        }
-      }
-    }
-  }
 }
 
 }  // namespace sai::task

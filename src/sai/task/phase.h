@@ -40,6 +40,7 @@ struct Phase {
   std::vector<std::shared_ptr<Task>> tasks;
 
   void run(const Context* ctx);
+  void setup_task_dependencies();
 };
 
 // make_phase.

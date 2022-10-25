@@ -21,6 +21,46 @@ void Phase::run(const Context* ctx) {
   }
 }
 
+void Phase::setup_task_dependencies() {
+  for (auto it = tasks.begin(), end = tasks.end(); it != end; ++it) {
+    using rev_iter = std::reverse_iterator<decltype(it)>;
+    auto task = it->get();
+    if (task->is_fence()) {
+      for (auto r_it = rev_iter(it), r_end = tasks.rend(); r_it != r_end;
+           ++r_it) {
+        task->add_dependency(r_it->get());
+        if ((*r_it)->is_fence()) break;
+      }
+    } else {
+      const auto& bits = task->type_bits();
+      for (auto i : bits.writes) {
+        for (auto r_it = rev_iter(it), r_end = tasks.rend(); r_it != r_end;
+             ++r_it) {
+          if ((*r_it)->is_fence()) {
+            task->add_dependency(r_it->get());
+            break;
+          }
+          if ((*r_it)->type_bits().is_conflict_write(i)) {
+            task->add_dependency(r_it->get());
+          }
+        }
+      }
+      for (auto i : bits.reads) {
+        for (auto r_it = rev_iter(it), r_end = tasks.rend(); r_it != r_end;
+             ++r_it) {
+          if ((*r_it)->is_fence()) {
+            task->add_dependency(r_it->get());
+            break;
+          }
+          if ((*r_it)->type_bits().is_conflict_read(i)) {
+            task->add_dependency(r_it->get());
+          }
+        }
+      }
+    }
+  }
+}
+
 void render_debug_gui(const PhaseReference* ref) {
   for (auto& phase : *ref->phases) {
     if (ImGui::CollapsingHeader(phase->name.c_str())) {

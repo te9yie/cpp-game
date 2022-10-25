@@ -78,8 +78,6 @@ class App : private t9::NonCopyable {
   }
 
   void add_task_(phase_index_type index, std::shared_ptr<Task> task);
-
-  void setup_dependencies_(Phase* phase);
 };
 
 }  // namespace sai::task
