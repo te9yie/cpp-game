@@ -10,6 +10,8 @@
 
 namespace sai::task {
 
+class Context;
+
 struct FirstPhase {};
 struct PreUpdatePhase {};
 struct UpdatePhase {};
@@ -36,6 +38,8 @@ struct Phase {
   std::string name;
   phase_index_type index;
   std::vector<std::shared_ptr<Task>> tasks;
+
+  void run(const Context* ctx);
 };
 
 // make_phase.

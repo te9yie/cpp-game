@@ -1,11 +1,25 @@
 #pragma once
 #include "phase.h"
 
+#include <algorithm>
 #include <map>
 
+#include "../job/executor.h"
 #include "imgui.h"
 
 namespace sai::task {
+
+void Phase::run(const Context* ctx) {
+  if (auto executor = ctx->get<job::Executor>()) {
+    std::for_each(tasks.begin(), tasks.end(), [executor, ctx](auto& task) {
+      task->set_context(ctx);
+      task->reset_state();
+      executor->submit(task);
+    });
+    executor->kick();
+    executor->join();
+  }
+}
 
 void render_debug_gui(const PhaseReference* ref) {
   for (auto& phase : *ref->phases) {

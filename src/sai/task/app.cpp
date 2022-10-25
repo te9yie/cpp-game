@@ -40,7 +40,6 @@ bool App::run() {
   }
   std::size_t reader_index = 0;
   auto reader = EventReader<video::WindowEvent>(&context_, &reader_index);
-  auto executor = context_.get<job::Executor>();
   bool loop = true;
   while (loop) {
     std::for_each(events_.begin(), events_.end(), [](auto e) { e->update(); });
@@ -49,15 +48,8 @@ bool App::run() {
         loop = false;
       }
     });
-    std::for_each(phases_.begin(), phases_.end(), [&](auto& phase) {
-      std::for_each(phase->tasks.begin(), phase->tasks.end(), [&](auto& task) {
-        task->set_context(&context_);
-        task->reset_state();
-        executor->submit(task);
-      });
-      executor->kick();
-      executor->join();
-    });
+    std::for_each(phases_.begin(), phases_.end(),
+                  [&](auto& phase) { phase->run(&context_); });
   }
   return true;
 }
