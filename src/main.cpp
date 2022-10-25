@@ -6,7 +6,7 @@
 #include "sai/debug/performance.h"
 #include "sai/graphics/sprite.h"
 #include "sai/task/app.h"
-#include "sai/task/phase.h"
+#include "sai/task/scheduler.h"
 
 namespace {
 
@@ -43,13 +43,13 @@ void update_ball(Ball* ball, const sai::graphics::SpriteStorage* sprites,
 }
 
 void render_debug_gui(sai::debug::Gui*, const sai::core::Frame* frame,
-                      const sai::task::PhaseReference* phases,
-                      const sai::debug::PerformanceProfiler* profiler) {
+                      sai::task::Scheduler* scheduler,
+                      sai::debug::PerformanceProfiler* profiler) {
   ImGui::Begin("Debug");
   sai::core::render_debug_gui(frame);
   if (ImGui::CollapsingHeader("Tasks")) {
     ImGui::Indent();
-    sai::task::render_debug_gui(phases);
+    scheduler->render_debug_gui();
     ImGui::Unindent();
   }
   profiler->render_debug_gui();

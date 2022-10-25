@@ -1,27 +1,27 @@
 #include "app.h"
 
 #include <algorithm>
-#include <iterator>
 
 #include "../core/core.h"
 #include "../debug/gui.h"
 #include "../graphics/sprite.h"
 #include "../video/video.h"
 #include "executor.h"
+#include "scheduler.h"
 
 namespace sai::task {
 
 App::App() {
-  phases_.emplace_back(make_phase<FirstPhase>("First"));
-  phases_.emplace_back(make_phase<PreUpdatePhase>("PreUpdate"));
-  phases_.emplace_back(make_phase<UpdatePhase>("Update"));
-  phases_.emplace_back(make_phase<PostUpdatePhase>("PostUpdate"));
-  phases_.emplace_back(make_phase<PreRenderPhase>("PreRender"));
-  phases_.emplace_back(make_phase<RenderPhase>("Render"));
-  phases_.emplace_back(make_phase<PostRenderPhase>("PostRender"));
-  phases_.emplace_back(make_phase<LastPhase>("Last"));
-
-  add_context<PhaseReference>(PhaseReference{&phases_});
+  if (auto scheduler = add_context<Scheduler>()) {
+    scheduler->phases.emplace_back(make_phase<FirstPhase>("First"));
+    scheduler->phases.emplace_back(make_phase<PreUpdatePhase>("PreUpdate"));
+    scheduler->phases.emplace_back(make_phase<UpdatePhase>("Update"));
+    scheduler->phases.emplace_back(make_phase<PostUpdatePhase>("PostUpdate"));
+    scheduler->phases.emplace_back(make_phase<PreRenderPhase>("PreRender"));
+    scheduler->phases.emplace_back(make_phase<RenderPhase>("Render"));
+    scheduler->phases.emplace_back(make_phase<PostRenderPhase>("PostRender"));
+    scheduler->phases.emplace_back(make_phase<LastPhase>("Last"));
+  }
 
   preset(core::preset_core);
   preset(preset_executor);
@@ -31,8 +31,8 @@ App::App() {
 }
 
 bool App::run() {
-  std::for_each(phases_.begin(), phases_.end(),
-                [this](auto& phase) { phase->setup_task_dependencies(); });
+  auto sch = context_.get<Scheduler>();
+  sch->setup_task_dependencies();
   for (auto& task : setup_tasks_) {
     if (!task->exec(&context_)) {
       return false;
@@ -48,18 +48,14 @@ bool App::run() {
         loop = false;
       }
     });
-    std::for_each(phases_.begin(), phases_.end(),
-                  [&](auto& phase) { phase->run(&context_); });
+    sch->run(&context_);
   }
   return true;
 }
 
 void App::add_task_(phase_index_type index, std::shared_ptr<Task> task) {
-  auto it = std::find_if(phases_.begin(), phases_.end(), [index](auto& phase) {
-    return phase->index == index;
-  });
-  assert(it != phases_.end() && "not found phase.");
-  (*it)->tasks.emplace_back(std::move(task));
+  auto sch = context_.get<Scheduler>();
+  sch->add_task(index, std::move(task));
 }
 
 }  // namespace sai::task

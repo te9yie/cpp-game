@@ -41,6 +41,7 @@ struct Phase {
 
   void run(const Context* ctx);
   void setup_task_dependencies();
+  void render_debug_gui();
 };
 
 // make_phase.
@@ -50,12 +51,5 @@ inline std::unique_ptr<Phase> make_phase(std::string_view name) {
   return std::make_unique<Phase>(
       Phase{std::move(phase_name), phase_index<T>::index()});
 }
-
-// PhaseReference.
-struct PhaseReference {
-  std::list<std::unique_ptr<Phase>>* phases = nullptr;
-};
-
-void render_debug_gui(const PhaseReference* ref);
 
 }  // namespace sai::task
