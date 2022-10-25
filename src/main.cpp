@@ -1,5 +1,7 @@
 #include <SDL.h>
 
+#include <algorithm>
+
 #include "imgui.h"
 #include "sai/core/frame.h"
 #include "sai/debug/gui.h"
@@ -14,8 +16,8 @@ struct Ball {
   sai::graphics::SpriteHandle sprite_handle;
   int x = 0;
   int y = 0;
-  int vx = 1;
-  int vy = 1;
+  int vx = 3;
+  int vy = 3;
 };
 
 bool create_ball(sai::graphics::SpriteStorage* sprites, Ball* ball) {
@@ -30,6 +32,9 @@ bool create_ball(sai::graphics::SpriteStorage* sprites, Ball* ball) {
 void update_ball(Ball* ball, const sai::graphics::SpriteStorage* sprites,
                  const sai::video::RenderSize* size) {
   auto sprite = sprites->get(ball->sprite_handle);
+  ball->x = std::min(ball->x, size->w);
+  ball->y = std::min(ball->y, size->h);
+
   ball->x = ball->x + ball->vx;
   ball->y = ball->y + ball->vy;
   if (ball->x + ball->vx < 0 || size->w < ball->x + ball->vx) {
@@ -38,6 +43,7 @@ void update_ball(Ball* ball, const sai::graphics::SpriteStorage* sprites,
   if (ball->y + ball->vy < 0 || size->h < ball->y + ball->vy) {
     ball->vy = -ball->vy;
   }
+
   sprite->rect.x = ball->x - 5;
   sprite->rect.y = ball->y - 5;
 }
