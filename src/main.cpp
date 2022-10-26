@@ -20,7 +20,7 @@
 namespace {
 
 template <typename T>
-T rand_i(int min, int max) {
+inline T rand_i(int min, int max) {
   return static_cast<T>(std::rand() % (max - min) + min);
 }
 
@@ -132,7 +132,6 @@ int main(int /*argc*/, char* /*argv*/[]) {
 #if defined(_MSC_VER)
   _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
-
   sai::task::App app;
 
   app.add_context<sai::ecs::Registry>();
