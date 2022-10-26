@@ -11,46 +11,71 @@
 #include "sai/core/frame.h"
 #include "sai/debug/gui.h"
 #include "sai/debug/performance.h"
+#include "sai/ecs/registry.h"
 #include "sai/graphics/sprite.h"
 #include "sai/task/app.h"
 #include "sai/task/scheduler.h"
 
 namespace {
 
-struct Ball {
-  sai::graphics::SpriteHandle sprite_handle;
-  int x = 0;
-  int y = 0;
-  int vx = 3;
-  int vy = 3;
+struct MovementComponent {
+  int x;
+  int y;
+  int vx;
+  int vy;
 };
 
-bool create_ball(sai::graphics::SpriteStorage* sprites, Ball* ball) {
-  SDL_Rect rect{0, 0, 10, 10};
-  sai::graphics::RGBA color{0xff, 0xff, 0x00, 0xff};
-  auto mat = std::make_unique<sai::graphics::ColorMaterial>(color);
-  ball->sprite_handle =
-      sprites->create(sai::graphics::Sprite{rect, std::move(mat)});
+struct SpriteComponent {
+  sai::graphics::SpriteHandle sprite_handle;
+};
+
+bool create_ball_entity(sai::ecs::Registry* registry,
+                        sai::graphics::SpriteStorage* sprites) {
+  auto id = registry->create_entity<MovementComponent, SpriteComponent>();
+
+  if (auto mc = registry->get<MovementComponent>(id)) {
+    mc->x = 0;
+    mc->y = 0;
+    mc->vx = 3;
+    mc->vy = 3;
+  }
+
+  if (auto sc = registry->get<SpriteComponent>(id)) {
+    SDL_Rect rect{0, 0, 10, 10};
+    sai::graphics::RGBA color{0xff, 0xff, 0x00, 0xff};
+    auto mat = std::make_unique<sai::graphics::ColorMaterial>(color);
+    sc->sprite_handle =
+        sprites->create(sai::graphics::Sprite{rect, std::move(mat)});
+  }
+
   return true;
 }
 
-void update_ball(Ball* ball, const sai::graphics::SpriteStorage* sprites,
-                 const sai::video::RenderSize* size) {
-  auto sprite = sprites->get(ball->sprite_handle);
-  ball->x = std::min(ball->x, size->w);
-  ball->y = std::min(ball->y, size->h);
+void update_movement(sai::ecs::Query<MovementComponent&> query,
+                     const sai::video::RenderSize* size) {
+  for (auto [mc] : query) {
+    mc.x = std::min(mc.x, size->w);
+    mc.y = std::min(mc.y, size->h);
 
-  ball->x = ball->x + ball->vx;
-  ball->y = ball->y + ball->vy;
-  if (ball->x + ball->vx < 0 || size->w < ball->x + ball->vx) {
-    ball->vx = -ball->vx;
+    mc.x = mc.x + mc.vx;
+    mc.y = mc.y + mc.vy;
+    if (mc.x + mc.vx < 0 || size->w < mc.x + mc.vx) {
+      mc.vx = -mc.vx;
+    }
+    if (mc.y + mc.vy < 0 || size->h < mc.y + mc.vy) {
+      mc.vy = -mc.vy;
+    }
   }
-  if (ball->y + ball->vy < 0 || size->h < ball->y + ball->vy) {
-    ball->vy = -ball->vy;
-  }
+}
 
-  sprite->rect.x = ball->x - 5;
-  sprite->rect.y = ball->y - 5;
+void update_sprites(
+    sai::ecs::Query<const MovementComponent&, SpriteComponent&> query,
+    sai::graphics::SpriteStorage* sprites) {
+  for (auto [mc, sc] : query) {
+    auto sprite = sprites->get(sc.sprite_handle);
+    sprite->rect.x = mc.x - 5;
+    sprite->rect.y = mc.y - 5;
+  }
 }
 
 void render_debug_gui(sai::debug::Gui*, const sai::core::Frame* frame,
@@ -76,11 +101,12 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
   sai::task::App app;
 
-  app.add_context<Ball>();
+  app.add_context<sai::ecs::Registry>();
 
-  app.add_setup_task(create_ball);
+  app.add_setup_task(create_ball_entity);
 
-  app.add_task("update ball", update_ball);
+  app.add_task("update movecomponents", update_movement);
+  app.add_task("apply sprites", update_sprites);
   app.add_task("render debug gui", render_debug_gui);
 
   return app.run() ? EXIT_SUCCESS : EXIT_FAILURE;

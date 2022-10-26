@@ -40,8 +40,8 @@ bool init_video_system(VideoSystem* sys, const VideoSettings* settings) {
   return true;
 }
 
-void handle_events(VideoSystem* sys, task::EventWriter<WindowEvent> writer,
-                   debug::Gui*) {
+void handle_events(VideoSystem* sys, RenderSize* size,
+                   task::EventWriter<WindowEvent> writer, debug::Gui*) {
   SDL_Event e;
   while (SDL_PollEvent(&e)) {
     ImGui_ImplSDL2_ProcessEvent(&e);
@@ -53,11 +53,12 @@ void handle_events(VideoSystem* sys, task::EventWriter<WindowEvent> writer,
       writer.notify(WindowEvent::Quit);
     }
   }
-}
-
-void begin_render(VideoSystem* sys, RenderSize* size) {
   auto r = sys->renderer.get();
   SDL_GetRendererOutputSize(r, &size->w, &size->h);
+}
+
+void begin_render(VideoSystem* sys) {
+  auto r = sys->renderer.get();
   SDL_SetRenderDrawColor(r, 0x12, 0x34, 0x56, 0xff);
   SDL_RenderClear(r);
 }

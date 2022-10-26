@@ -51,9 +51,9 @@ enum class WindowEvent {
 };
 
 bool init_video_system(VideoSystem* sys, const VideoSettings* settings);
-void handle_events(VideoSystem* sys, task::EventWriter<WindowEvent> writer,
-                   debug::Gui*);
-void begin_render(VideoSystem* sys, RenderSize* size);
+void handle_events(VideoSystem* sys, RenderSize* size,
+                   task::EventWriter<WindowEvent> writer, debug::Gui*);
+void begin_render(VideoSystem* sys);
 void end_render(VideoSystem* sys);
 void preset_video(task::App* app);
 
