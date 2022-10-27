@@ -3,10 +3,10 @@
 
 #include <memory>
 
+#include "../handle.h"
 #include "../task/fwd.h"
 #include "../video/video.h"
 #include "material.h"
-#include "t9/handle.h"
 
 namespace sai::graphics {
 
@@ -17,8 +17,8 @@ struct Sprite {
 };
 
 // SpriteStorage.
-using SpriteHandle = t9::Handle<Sprite>;
-using SpriteStorage = t9::HandleStorage<Sprite>;
+using SpriteHandle = Handle<Sprite>;
+using SpriteStorage = HandleStorage<Sprite>;
 
 void render_sprites(video::VideoSystem* sys, SpriteStorage* sprites);
 

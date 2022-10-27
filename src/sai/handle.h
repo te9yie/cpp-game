@@ -1,7 +1,10 @@
 #pragma once
 #include <SDL.h>
 
+#include <algorithm>
+#include <cassert>
 #include <cstddef>
+#include <deque>
 #include <memory>
 #include <utility>
 
@@ -15,10 +18,10 @@ struct HandleId {
   std::size_t revision = 0;
   std::size_t index = 0;
 
-  static inline const HandleId INVALID;
+  bool is_valid() const { return revision > 0; }
 
   bool operator==(const HandleId& rhs) const {
-    return revision == rhs.revision && index && rhs.index;
+    return revision == rhs.revision && index == rhs.index;
   }
   bool operator!=(const HandleId& rhs) const { return !operator==(rhs); }
 };
@@ -45,7 +48,7 @@ struct Handle final {
     }
   }
   Handle(Handle&& rhs) : Handle(rhs.id, rhs.observer) {
-    rhs.id = HandleId::INVALID;
+    rhs.id = HandleId{};
     rhs.observer = nullptr;
   }
   ~Handle() {
@@ -73,7 +76,7 @@ struct Handle final {
 // HandleEntry.
 template <typename T>
 struct HandleEntry {
-  SDL_Atomic_t ref_count;
+  SDL_atomic_t ref_count;
   std::size_t revision = 0;
   std::unique_ptr<T> x;
 };
@@ -84,7 +87,7 @@ class HandleStorage : private HandleObserver, private t9::NonCopyable {
  private:
   std::size_t peak_index_ = 0;
   std::deque<std::size_t> index_stock_;
-  std::deque<EntryHandle<T>> entries_;
+  std::deque<HandleEntry<T>> entries_;
   std::deque<HandleId> remove_ids_;
   sync::MutexPtr remove_mutex_;
 
@@ -95,7 +98,44 @@ class HandleStorage : private HandleObserver, private t9::NonCopyable {
     auto& entry = entries_[index];
     SDL_AtomicSet(&entry.ref_count, 1);
     entry.x = std::make_unique<T>(std::forward<Args>(args)...);
-    return Handle<T>(HandleId(entry.revision, index), this);
+    return Handle<T>(HandleId{entry.revision, index}, this);
+  }
+
+  void update() {
+    sync::UniqueLock lock(remove_mutex_.get());
+    for (auto id : remove_ids_) {
+      assert(id.index < entries_.size());
+      auto& entry = entries_[id.index];
+      if (entry.revision != id.revision) continue;
+      if (SDL_AtomicGet(&entry.ref_count) > 0) continue;
+      entry.revision = std::max<std::size_t>(entry.revision + 1, 1);
+      entry.x.reset();
+      index_stock_.emplace_back(id.index);
+    }
+    remove_ids_.clear();
+  }
+
+  T* get(const Handle<T>& handle) const {
+    assert(handle.id.index < entries_.size());
+    auto& entry = entries_[handle.id.index];
+    if (handle.id.revision != entry.revision) return nullptr;
+    return entry.x.get();
+  }
+
+  bool exists(const Handle<T>& handle) const {
+    assert(handle.id.index < entries_.size());
+    auto& entry = entries_[handle.id.index];
+    return handle.id.revision == entry.revision;
+  }
+
+  template <typename F>
+  void each(F f) {
+    std::for_each(entries_.begin(), entries_.end(),
+                  [f](const HandleEntry<T>& e) {
+                    if (e.x) {
+                      f(e.x.get());
+                    }
+                  });
   }
 
  private:
@@ -130,7 +170,7 @@ class HandleStorage : private HandleObserver, private t9::NonCopyable {
     if (SDL_AtomicAdd(&entry.ref_count, -1) > 1) return;
 
     sync::UniqueLock lock(remove_mutex_.get());
-    remove_ids_.emplac_back(id);
+    remove_ids_.emplace_back(id);
   }
 };
 

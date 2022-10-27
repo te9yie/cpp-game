@@ -5,6 +5,7 @@
 namespace sai::graphics {
 
 void render_sprites(video::VideoSystem* sys, SpriteStorage* sprites) {
+  sprites->update();
   auto r = sys->renderer.get();
   sprites->each([r](Sprite* s) { s->material->render(r, &s->rect); });
 }
