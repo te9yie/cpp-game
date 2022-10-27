@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cassert>
 #include <memory>
 #include <vector>
 
@@ -88,6 +89,7 @@ struct EventWriter {
 
   template <class... Args>
   void notify(Args&&... args) {
+    assert(subject);
     subject->notify<Args...>(std::forward<Args>(args)...);
   }
 };
@@ -105,6 +107,7 @@ struct EventReader {
 
   template <typename F>
   void each(F f) {
+    assert(subject_);
     for (auto e = subject_->get_event(*index_); e;
          e = subject_->get_event(*index_)) {
       *index_ = e->index + 1;

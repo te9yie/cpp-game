@@ -25,6 +25,7 @@ inline T rand_i(int min, int max) {
 }
 
 struct CreateRect {};
+struct ClearRects {};
 
 struct MovementComponent {
   int x;
@@ -47,8 +48,9 @@ bool setup_rects(sai::task::EventWriter<CreateRect> writer) {
 void create_rects(sai::ecs::Registry* registry,
                   sai::graphics::SpriteStorage* sprites,
                   const sai::video::RenderSize* size,
-                  sai::task::EventReader<CreateRect> reader) {
-  reader.each([&](auto) {
+                  sai::task::EventReader<CreateRect> create,
+                  sai::task::EventReader<ClearRects> clear) {
+  create.each([&](auto) {
     auto id = registry->create_entity<MovementComponent, SpriteComponent>();
 
     if (auto mc = registry->get<MovementComponent>(id)) {
@@ -66,6 +68,7 @@ void create_rects(sai::ecs::Registry* registry,
       sc->handle = sprites->create(sai::graphics::Sprite{rect, std::move(mat)});
     }
   });
+  clear.each([&](auto) { registry->destroy_all_entities(); });
 }
 
 void update_movement(sai::ecs::Query<MovementComponent&> query,
@@ -97,24 +100,30 @@ void update_sprites(
 
 void render_debug_gui(sai::debug::Gui*, const sai::core::Frame* frame,
                       sai::task::Scheduler* scheduler,
+                      sai::ecs::Registry* registry,
                       sai::debug::PerformanceProfiler* profiler,
-                      sai::task::EventWriter<CreateRect> writer) {
+                      sai::task::EventWriter<CreateRect> create,
+                      sai::task::EventWriter<ClearRects> clear) {
   ImGui::Begin("Debug");
   if (ImGui::Button("Create")) {
-    writer.notify(CreateRect{});
-  }
-  ImGui::SameLine();
-  if (ImGui::Button("Create 10")) {
-    for (int i = 0; i < 10; ++i) {
-      writer.notify(CreateRect{});
-    }
+    create.notify(CreateRect{});
   }
   ImGui::SameLine();
   if (ImGui::Button("Create 100")) {
     for (int i = 0; i < 100; ++i) {
-      writer.notify(CreateRect{});
+      create.notify(CreateRect{});
     }
   }
+  ImGui::SameLine();
+  if (ImGui::Button("Create 10000")) {
+    for (int i = 0; i < 10000; ++i) {
+      create.notify(CreateRect{});
+    }
+  }
+  if (ImGui::Button("Clear")) {
+    clear.notify(ClearRects{});
+  }
+  registry->render_debug_gui();
   ImGui::Separator();
   sai::core::render_debug_gui(frame);
   if (ImGui::CollapsingHeader("Tasks")) {
@@ -136,6 +145,7 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
   app.add_context<sai::ecs::Registry>();
   app.add_event<CreateRect>();
+  app.add_event<ClearRects>();
 
   app.add_setup_task(setup_rects);
 

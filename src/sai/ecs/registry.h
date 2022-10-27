@@ -6,6 +6,7 @@
 #include "archetype.h"
 #include "chunk.h"
 #include "entity.h"
+#include "imgui.h"
 #include "query.h"
 #include "t9/func_traits.h"
 #include "t9/noncopyable.h"
@@ -121,6 +122,15 @@ class Registry : private t9::NonCopyable {
       return;
     }
     for_iter_ = chunk;
+  }
+
+ public:
+  void render_debug_gui() {
+    auto entity_capacity = entities_.size();
+    auto entity_count = entity_capacity - free_indices_.size();
+    ImGui::Text("Entity: %zu/%zu", entity_count, entity_capacity);
+    ImGui::Text("Archetype: %zu", archetypes_.size());
+    ImGui::Text("Chunk: %zu", chunks_.size());
   }
 };
 

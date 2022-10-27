@@ -80,7 +80,7 @@ class Tuple : private t9::NonCopyable {
     for (std::size_t i = 0; i < n; ++i) {
       if (types_[i].type != types[i]) return false;
     }
-    return false;
+    return true;
   }
 
   template <typename... Ts>
