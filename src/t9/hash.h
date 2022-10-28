@@ -9,7 +9,7 @@ namespace detail {
 
 inline std::uint32_t rotate_left_(std::uint32_t x, std::uint32_t n) {
   constexpr std::uint32_t BITS_N = 32;
-  return (x << n) | (n >> (BITS_N - n));
+  return (x << n) | (x >> (BITS_N - n));
 }
 inline void fxhash_(std::uint32_t* hash, std::uint32_t x) {
   *hash = (rotate_left_(*hash, 5) ^ x) * 0x9e3779b9;
