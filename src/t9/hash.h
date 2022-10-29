@@ -20,9 +20,10 @@ inline void fxhash_(std::uint32_t* hash, std::uint32_t x) {
 inline void fxhash(std::uint32_t* hash, const void* data, std::size_t n) {
   auto p = reinterpret_cast<const std::uint8_t*>(data);
   std::size_t i = 0;
-  for (; i + 4 <= n; i += 4) {
+  while (n - i >= 4) {
     const auto u32 = *reinterpret_cast<const std::uint32_t*>(p + i);
     detail::fxhash_(hash, u32);
+    i += 4;
   }
   const auto u32 = *reinterpret_cast<const std::uint32_t*>(p + i);
   // clang-format off

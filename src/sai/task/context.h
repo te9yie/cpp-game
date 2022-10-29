@@ -1,29 +1,30 @@
 #pragma once
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 #include "t9/noncopyable.h"
+#include "t9/type_list.h"
 
 namespace sai::task {
 
 // Context.
 class Context final : private t9::NonCopyable {
+ public:
+  // type2index.
+  template <typename T>
+  struct type2index {
+    static inline std::size_t index = 0;
+  };
+
  private:
   // EntryBase.
-  struct EntryBase {
-    virtual ~EntryBase() = default;
-  };
+  struct EntryBase {};
   template <typename T>
   struct Entry : EntryBase {
     T x;
     template <typename... Args>
     Entry(Args&&... args) : x(std::forward<Args>(args)...) {}
-  };
-
-  // type2index.
-  template <typename T>
-  struct type2index {
-    static inline std::size_t index = 0;
   };
 
  public:
@@ -57,4 +58,37 @@ class Context final : private t9::NonCopyable {
   }
 };
 
+// ContextRef.
+class ContextRef final {
+ private:
+  // type2index.
+  template <typename T>
+  using type2index = Context::type2index<T>;
+
+ private:
+  std::unordered_map<std::size_t, void*> storage_;
+
+ public:
+  template <typename... Ts>
+  void setup(const Context* ctx) {
+    insert_pair_<Ts...>(ctx, t9::type_list<Ts...>{});
+  }
+
+  template <typename T>
+  T* get() const {
+    auto i = type2index<T>::index;
+    auto it = storage_.find(i);
+    if (it == storage_.end()) return nullptr;
+    return static_cast<T*>(it->second);
+  }
+
+ private:
+  void insert_pair_(const Context*, t9::type_list<>) {}
+
+  template <typename T, typename... Ts>
+  void insert_pair_(const Context* ctx, t9::type_list<T, Ts...>) {
+    storage_.emplace(type2index<T>::index, ctx->get<T>());
+    insert_pair_(ctx, t9::type_list<Ts...>{});
+  }
+};
 }  // namespace sai::task
