@@ -34,10 +34,6 @@ class App : private t9::NonCopyable {
   T* add_context(Args&&... args) {
     return context_.add<T>(std::forward<Args>(args)...);
   }
-  template <typename T>
-  T* add_context_ref() {
-    return context_.add<T>(&context_);
-  }
 
   template <typename T>
   void add_event() {

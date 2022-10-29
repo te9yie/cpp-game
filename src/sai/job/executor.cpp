@@ -63,6 +63,7 @@ void Executor::stop() {
   std::for_each(threads_.begin(), threads_.end(),
                 [](auto t) { SDL_WaitThread(t, nullptr); });
   threads_.clear();
+  jobs_.clear();
 
   mutex_.reset();
   condition_.reset();
@@ -123,7 +124,7 @@ void Executor::exec_jobs_() {
       sync::UniqueLock lock(mutex_.get());
       auto it = std::find_if(jobs_.begin(), jobs_.end(),
                              [](auto& job) { return job->can_exec(); });
-      if (it == jobs_.end()) {
+      if (it == jobs_.end() && !is_stop_) {
         SDL_CondWait(condition_.get(), mutex_.get());
         continue;
       }

@@ -69,22 +69,6 @@ struct arg_traits<const T*> {
   static const T* to(const Context* ctx, TaskWork*) { return ctx->get<T>(); }
 };
 
-template <typename... Ts>
-struct arg_traits<ContextRef<Ts...>> {
-  static void set_type_bits_(ArgsTypeBits*, t9::type_list<>) {}
-  template <typename U, typename... Us>
-  static void set_type_bits_(ArgsTypeBits* bits, t9::type_list<U, Us...>) {
-    arg_traits<U*>::set_type_bits(bits);
-    set_type_bits_(bits, t9::type_list<Us...>{});
-  }
-  static void set_type_bits(ArgsTypeBits* bits) {
-    set_type_bits_(bits, t9::type_list<Ts...>{});
-  }
-  static ContextRef<Ts...> to(const Context* ctx, TaskWork*) {
-    return ctx->get<ContextRef<Ts...>>();
-  }
-};
-
 namespace args_ {
 
 inline void set_args_type_bits(ArgsTypeBits*, t9::type_list<>) {}
