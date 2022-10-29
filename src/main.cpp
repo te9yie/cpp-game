@@ -98,10 +98,11 @@ void update_sprites(
   }
 }
 
-void render_debug_gui(sai::debug::Gui*, const sai::core::Frame* frame,
-                      sai::task::Scheduler* scheduler,
-                      sai::ecs::Registry* registry,
-                      sai::debug::PerformanceProfiler* profiler,
+using RenderDebugGuiContext =
+    sai::task::ContextRef<sai::core::Frame, sai::task::Scheduler,
+                          sai::ecs::Registry, sai::debug::PerformanceProfiler>;
+
+void render_debug_gui(sai::debug::Gui*, const RenderDebugGuiContext* ctx,
                       sai::task::EventWriter<CreateRect> create,
                       sai::task::EventWriter<ClearRects> clear) {
   ImGui::Begin("Debug");
@@ -123,15 +124,15 @@ void render_debug_gui(sai::debug::Gui*, const sai::core::Frame* frame,
   if (ImGui::Button("Clear")) {
     clear.notify(ClearRects{});
   }
-  registry->render_debug_gui();
+  ctx->get<sai::ecs::Registry>()->render_debug_gui();
   ImGui::Separator();
-  sai::core::render_debug_gui(frame);
+  sai::core::render_debug_gui(ctx->get<sai::core::Frame>());
   if (ImGui::CollapsingHeader("Tasks")) {
     ImGui::Indent();
-    scheduler->render_debug_gui();
+    ctx->get<sai::task::Scheduler>()->render_debug_gui();
     ImGui::Unindent();
   }
-  profiler->render_debug_gui();
+  ctx->get<sai::debug::PerformanceProfiler>()->render_debug_gui();
   ImGui::End();
 }
 
@@ -144,6 +145,7 @@ int main(int /*argc*/, char* /*argv*/[]) {
   sai::task::App app;
 
   app.add_context<sai::ecs::Registry>();
+  app.add_context_ref<RenderDebugGuiContext>();
   app.add_event<CreateRect>();
   app.add_event<ClearRects>();
 

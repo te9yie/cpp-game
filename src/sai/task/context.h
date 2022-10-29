@@ -59,36 +59,36 @@ class Context final : private t9::NonCopyable {
 };
 
 // ContextRef.
+template <typename... Ts>
 class ContextRef final {
  private:
   // type2index.
-  template <typename T>
-  using type2index = Context::type2index<T>;
+  template <typename U>
+  using type2index = Context::type2index<U>;
 
  private:
   std::unordered_map<std::size_t, void*> storage_;
 
  public:
-  template <typename... Ts>
-  void setup(const Context* ctx) {
-    insert_pair_<Ts...>(ctx, t9::type_list<Ts...>{});
+  explicit ContextRef(const Context* ctx) {
+    insert_pair_(ctx, t9::type_list<Ts...>{});
   }
 
-  template <typename T>
-  T* get() const {
-    auto i = type2index<T>::index;
+  template <typename U>
+  U* get() const {
+    auto i = type2index<U>::index;
     auto it = storage_.find(i);
     if (it == storage_.end()) return nullptr;
-    return static_cast<T*>(it->second);
+    return static_cast<U*>(it->second);
   }
 
  private:
   void insert_pair_(const Context*, t9::type_list<>) {}
 
-  template <typename T, typename... Ts>
-  void insert_pair_(const Context* ctx, t9::type_list<T, Ts...>) {
-    storage_.emplace(type2index<T>::index, ctx->get<T>());
-    insert_pair_(ctx, t9::type_list<Ts...>{});
+  template <typename U, typename... Us>
+  void insert_pair_(const Context* ctx, t9::type_list<U, Us...>) {
+    storage_.emplace(type2index<U>::index, ctx->get<U>());
+    insert_pair_(ctx, t9::type_list<Us...>{});
   }
 };
 }  // namespace sai::task
