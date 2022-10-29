@@ -15,7 +15,8 @@ FetchContent_MakeAvailable(sdl)
 # imgui
 FetchContent_Declare(
     imgui
-    GIT_REPOSITORY https://github.com/ocornut/imgui)
+    GIT_REPOSITORY https://github.com/ocornut/imgui
+    GIT_TAG v1.88)
 FetchContent_MakeAvailable(imgui)
 
 file(GLOB IMGUI_SOURCES
@@ -31,6 +32,9 @@ file(GLOB_RECURSE SOURCES
 	${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 # filter
+file (GLOB GAME_DEBUG_SOURCES ${PROJECT_SOURCE_DIR}/src/game/debug/*)
+file (GLOB GAME_DEBUG_WINDOW_SOURCES ${PROJECT_SOURCE_DIR}/src/game/debug/window/*)
+file (GLOB GAME_SOURCES ${PROJECT_SOURCE_DIR}/src/game/*)
 file (GLOB SAI_CORE_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/core/*)
 file (GLOB SAI_DEBUG_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/debug/*)
 file (GLOB SAI_ECS_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/ecs/*)
@@ -41,6 +45,9 @@ file (GLOB SAI_TASK_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/task/*)
 file (GLOB SAI_THREADING_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/threading/*)
 file (GLOB SAI_VIDEO_SOURCES ${PROJECT_SOURCE_DIR}/src/sai/video/*)
 file (GLOB T9_SOURCES ${PROJECT_SOURCE_DIR}/src/t9/*)
+source_group(game FILES ${GAME_SOURCES})
+source_group(game/debug FILES ${GAME_DEBUG_SOURCES})
+source_group(game/debug/window FILES ${GAME_DEBUG_WINDOW_SOURCES})
 source_group(sai FILES ${SAI_SOURCES})
 source_group(sai/core FILES ${SAI_CORE_SOURCES})
 source_group(sai/debug FILES ${SAI_DEBUG_SOURCES})
@@ -58,6 +65,8 @@ add_executable(${PROJECT_NAME} WIN32
 target_compile_options(${PROJECT_NAME} PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W4 /utf-8>
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-W -Wall>)
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:DEBUG>>:_CRTDBG_MAP_ALLOC>)
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/src)
 target_include_directories(${PROJECT_NAME} PRIVATE ${imgui_SOURCE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${imgui_SOURCE_DIR}/backends)
