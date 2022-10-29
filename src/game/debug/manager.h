@@ -2,7 +2,7 @@
 #include <deque>
 #include <memory>
 
-#include "context.h"
+#include "local_app.h"
 #include "sai/debug/gui.h"
 #include "sai/task/fwd.h"
 #include "window.h"
@@ -16,13 +16,12 @@ class Manager {
 
  public:
   bool setup();
-  void show_menu(const DebugGuiContext& ctx);
-  void show_window(const DebugGuiContext& ctx);
+  void show_menu(const DebugGuiApp& ctx);
+  void show_window(const DebugGuiApp& ctx);
 };
 
 void preset_debug(sai::task::App* app);
 bool setup_debug_gui(sai::debug::Gui*, Manager* mgr);
-void render_debug_gui(sai::debug::Gui*, Manager* mgr,
-                      const DebugGuiContext& ctx);
+void render_debug_gui(sai::debug::Gui*, Manager* mgr, const DebugGuiApp& ctx);
 
 }  // namespace game::debug

@@ -1,9 +1,8 @@
 #include "manager.h"
 
-#include "context.h"
 #include "sai/task/app.h"
 #include "window/performance.h"
-#include "window/scheduler.h"
+#include "window/schedule.h"
 
 namespace game::debug {
 
@@ -12,11 +11,11 @@ bool Manager::setup() {
   windows_.emplace_back(std::make_unique<ScheduleWindow>());
   return true;
 }
-void Manager::show_menu(const DebugGuiContext& /*ctx*/) {
+void Manager::show_menu(const DebugGuiApp& /*ctx*/) {
   std::for_each(windows_.begin(), windows_.end(),
                 [](auto& window) { window->show_menu_item(); });
 }
-void Manager::show_window(const DebugGuiContext& ctx) {
+void Manager::show_window(const DebugGuiApp& ctx) {
   std::for_each(windows_.begin(), windows_.end(),
                 [ctx](auto& window) { window->show_window(ctx); });
 }
@@ -29,8 +28,7 @@ void preset_debug(sai::task::App* app) {
 
 bool setup_debug_gui(sai::debug::Gui*, Manager* mgr) { return mgr->setup(); }
 
-void render_debug_gui(sai::debug::Gui*, Manager* mgr,
-                      const DebugGuiContext& ctx) {
+void render_debug_gui(sai::debug::Gui*, Manager* mgr, const DebugGuiApp& ctx) {
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("Game")) {
       mgr->show_menu(ctx);

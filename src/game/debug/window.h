@@ -1,5 +1,5 @@
 #pragma once
-#include "context.h"
+#include "local_app.h"
 
 namespace game::debug {
 
@@ -12,12 +12,12 @@ class Window {
   virtual ~Window() = default;
 
   void show_menu_item();
-  void show_window(const DebugGuiContext& ctx);
+  void show_window(const DebugGuiApp& ctx);
 
  protected:
   virtual const char* menu_item_name() const = 0;
   virtual const char* window_name() const { return menu_item_name(); }
-  virtual void on_render(const DebugGuiContext& ctx) = 0;
+  virtual void on_render(const DebugGuiApp& ctx) = 0;
 };
 
 }  // namespace game::debug

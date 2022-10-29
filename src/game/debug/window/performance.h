@@ -7,7 +7,7 @@ namespace game::debug {
 class PerformanceWindow : public Window {
  protected:
   virtual const char* menu_item_name() const override { return "Performance"; }
-  virtual void on_render(const DebugGuiContext& ctx) override;
+  virtual void on_render(const DebugGuiApp& ctx) override;
 };
 
 }  // namespace game::debug

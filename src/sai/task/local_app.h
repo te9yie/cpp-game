@@ -4,15 +4,15 @@
 
 namespace sai::task {
 
-// ContextRef.
+// LocalApp.
 template <typename... Ts>
-class ContextRef final {
+class LocalApp final {
  private:
   const Context* ctx_ = nullptr;
   TaskWork* work_ = nullptr;
 
  public:
-  explicit ContextRef(const Context* ctx, TaskWork* work)
+  explicit LocalApp(const Context* ctx, TaskWork* work)
       : ctx_(ctx), work_(work) {}
 
   template <typename U>
@@ -28,7 +28,7 @@ class ContextRef final {
 
 // arg_traits.
 template <typename... Ts>
-struct arg_traits<ContextRef<Ts...>> {
+struct arg_traits<LocalApp<Ts...>> {
   static void set_type_bits_(ArgsTypeBits*, t9::type_list<>) {}
   template <typename U, typename... Us>
   static void set_type_bits_(ArgsTypeBits* bits, t9::type_list<U, Us...>) {
@@ -38,18 +38,18 @@ struct arg_traits<ContextRef<Ts...>> {
   static void set_type_bits(ArgsTypeBits* bits) {
     set_type_bits_(bits, t9::type_list<Ts...>{});
   }
-  static ContextRef<Ts...> to(const Context* ctx, TaskWork* work) {
-    return ContextRef<Ts...>(ctx, work);
+  static LocalApp<Ts...> to(const Context* ctx, TaskWork* work) {
+    return LocalApp<Ts...>(ctx, work);
   }
 };
 
 template <typename... Ts>
-struct arg_traits<const ContextRef<Ts...>&> {
+struct arg_traits<const LocalApp<Ts...>&> {
   static void set_type_bits(ArgsTypeBits* bits) {
-    arg_traits<ContextRef<Ts...>>::set_type_bits(bits);
+    arg_traits<LocalApp<Ts...>>::set_type_bits(bits);
   }
-  static ContextRef<Ts...> to(const Context* ctx, TaskWork* work) {
-    return arg_traits<ContextRef<Ts...>>::to(ctx, work);
+  static LocalApp<Ts...> to(const Context* ctx, TaskWork* work) {
+    return arg_traits<LocalApp<Ts...>>::to(ctx, work);
   }
 };
 

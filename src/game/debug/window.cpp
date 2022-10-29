@@ -6,7 +6,7 @@ void Window::show_menu_item() {
   ImGui::MenuItem(menu_item_name(), nullptr, &is_open_);
 }
 
-void Window::show_window(const DebugGuiContext& ctx) {
+void Window::show_window(const DebugGuiApp& ctx) {
   if (!is_open_) return;
 
   if (ImGui::Begin(window_name(), &is_open_)) {
