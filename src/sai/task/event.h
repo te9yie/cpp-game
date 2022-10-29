@@ -10,16 +10,16 @@
 
 namespace sai::task {
 
-// Event.
-class Event {
+// EventBase.
+class EventBase {
  public:
-  virtual ~Event() = default;
+  virtual ~EventBase() = default;
   virtual void update() = 0;
 };
 
-// EventSubject.
+// Event.
 template <typename T>
-class EventSubject : public Event {
+class Event : public EventBase {
  public:
   // EventData.
   template <class T>
@@ -83,9 +83,9 @@ struct EventObserver {
 // EventWriter.
 template <typename T>
 struct EventWriter {
-  EventSubject<T>* subject = nullptr;
+  Event<T>* subject = nullptr;
 
-  EventWriter(const Context* ctx) : subject(ctx->get<EventSubject<T>>()) {}
+  EventWriter(const Context* ctx) : subject(ctx->get<Event<T>>()) {}
 
   template <class... Args>
   void notify(Args&&... args) {
@@ -98,12 +98,12 @@ struct EventWriter {
 template <typename T>
 struct EventReader {
  private:
-  EventSubject<T>* subject_ = nullptr;
+  Event<T>* subject_ = nullptr;
   std::size_t* index_ = nullptr;
 
  public:
   EventReader(const Context* ctx, std::size_t* i)
-      : subject_(ctx->get<EventSubject<T>>()), index_(i) {}
+      : subject_(ctx->get<Event<T>>()), index_(i) {}
 
   template <typename F>
   void each(F f) {
@@ -119,9 +119,7 @@ struct EventReader {
 // arg_traits.
 template <typename T>
 struct arg_traits<EventWriter<T>> {
-  static void set_type_bits(ArgsTypeBits* bits) {
-    bits->set_write<EventSubject<T>>();
-  }
+  static void set_type_bits(ArgsTypeBits* bits) { bits->set_write<Event<T>>(); }
   static EventWriter<T> to(const Context* ctx, TaskWork*) {
     return EventWriter<T>(ctx);
   }
@@ -129,9 +127,7 @@ struct arg_traits<EventWriter<T>> {
 
 template <typename T>
 struct arg_traits<EventReader<T>> {
-  static void set_type_bits(ArgsTypeBits* bits) {
-    bits->set_read<EventSubject<T>>();
-  }
+  static void set_type_bits(ArgsTypeBits* bits) { bits->set_read<Event<T>>(); }
   static EventReader<T> to(const Context* ctx, TaskWork* work) {
     auto o = work->get<EventObserver<T>>();
     if (!o) {

@@ -16,12 +16,12 @@ class Manager {
 
  public:
   bool setup();
-  void show_menu(const DebugGuiApp& ctx);
-  void show_window(const DebugGuiApp& ctx);
+  void show_menu(const DebugGuiApp& app);
+  void show_window(const DebugGuiApp& app);
 };
 
 void preset_debug(sai::task::App* app);
 bool setup_debug_gui(sai::debug::Gui*, Manager* mgr);
-void render_debug_gui(sai::debug::Gui*, Manager* mgr, const DebugGuiApp& ctx);
+void render_debug_gui(sai::debug::Gui*, Manager* mgr, const DebugGuiApp& app);
 
 }  // namespace game::debug

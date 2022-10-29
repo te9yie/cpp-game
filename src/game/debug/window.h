@@ -12,12 +12,12 @@ class Window {
   virtual ~Window() = default;
 
   void show_menu_item();
-  void show_window(const DebugGuiApp& ctx);
+  void show_window(const DebugGuiApp& app);
 
  protected:
   virtual const char* menu_item_name() const = 0;
   virtual const char* window_name() const { return menu_item_name(); }
-  virtual void on_render(const DebugGuiApp& ctx) = 0;
+  virtual void on_render(const DebugGuiApp& app) = 0;
 };
 
 }  // namespace game::debug

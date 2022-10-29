@@ -11,13 +11,13 @@ bool Manager::setup() {
   windows_.emplace_back(std::make_unique<ScheduleWindow>());
   return true;
 }
-void Manager::show_menu(const DebugGuiApp& /*ctx*/) {
+void Manager::show_menu(const DebugGuiApp&) {
   std::for_each(windows_.begin(), windows_.end(),
                 [](auto& window) { window->show_menu_item(); });
 }
-void Manager::show_window(const DebugGuiApp& ctx) {
+void Manager::show_window(const DebugGuiApp& app) {
   std::for_each(windows_.begin(), windows_.end(),
-                [ctx](auto& window) { window->show_window(ctx); });
+                [app](auto& window) { window->show_window(app); });
 }
 
 void preset_debug(sai::task::App* app) {
@@ -28,16 +28,21 @@ void preset_debug(sai::task::App* app) {
 
 bool setup_debug_gui(sai::debug::Gui*, Manager* mgr) { return mgr->setup(); }
 
-void render_debug_gui(sai::debug::Gui*, Manager* mgr, const DebugGuiApp& ctx) {
+void render_debug_gui(sai::debug::Gui*, Manager* mgr, const DebugGuiApp& app) {
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("Game")) {
-      mgr->show_menu(ctx);
+      mgr->show_menu(app);
+      ImGui::Separator();
+      if (ImGui::MenuItem("Quit")) {
+        auto writer = app.get_event_writer<sai::video::WindowEvent>();
+        writer.notify(sai::video::WindowEvent::Quit);
+      }
       ImGui::EndMenu();
     }
     ImGui::EndMainMenuBar();
   }
 
-  mgr->show_window(ctx);
+  mgr->show_window(app);
 }
 
 }  // namespace game::debug

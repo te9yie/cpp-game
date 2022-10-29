@@ -1,6 +1,7 @@
 #pragma once
 #include "args.h"
 #include "context.h"
+#include "event.h"
 
 namespace sai::task {
 
@@ -21,8 +22,13 @@ class LocalApp final {
   }
 
   template <typename U>
-  U get_event() const {
-    return arg_traits<U>::to(ctx_, work_);
+  EventWriter<U> get_event_writer() const {
+    return arg_traits<EventWriter<U>>::to(ctx_, work_);
+  }
+
+  template <typename U>
+  EventReader<U> get_event_reader() const {
+    return arg_traits<EventReader<U>>::to(ctx_, work_);
   }
 };
 

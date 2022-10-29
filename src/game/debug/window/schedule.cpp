@@ -5,8 +5,8 @@
 namespace game::debug {
 
 /*virtual*/ void ScheduleWindow::on_render(
-    const DebugGuiApp& ctx) /*override*/ {
-  auto scheduler = ctx.get_context<sai::task::Scheduler>();
+    const DebugGuiApp& app) /*override*/ {
+  auto scheduler = app.get_context<sai::task::Scheduler>();
   scheduler->render_debug_gui();
 }
 
