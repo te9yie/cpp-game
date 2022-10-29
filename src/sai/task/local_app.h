@@ -17,18 +17,8 @@ class LocalApp final {
       : ctx_(ctx), work_(work) {}
 
   template <typename U>
-  U* get_context() const {
-    return arg_traits<U*>::to(ctx_, work_);
-  }
-
-  template <typename U>
-  EventWriter<U> get_event_writer() const {
-    return arg_traits<EventWriter<U>>::to(ctx_, work_);
-  }
-
-  template <typename U>
-  EventReader<U> get_event_reader() const {
-    return arg_traits<EventReader<U>>::to(ctx_, work_);
+  U get() const {
+    return arg_traits<U>::to(ctx_, work_);
   }
 };
 

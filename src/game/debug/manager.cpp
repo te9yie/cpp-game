@@ -34,7 +34,8 @@ void render_debug_gui(sai::debug::Gui*, Manager* mgr, const DebugGuiApp& app) {
       mgr->show_menu(app);
       ImGui::Separator();
       if (ImGui::MenuItem("Quit")) {
-        auto writer = app.get_event_writer<sai::video::WindowEvent>();
+        auto writer =
+            app.get<sai::task::EventWriter<sai::video::WindowEvent>>();
         writer.notify(sai::video::WindowEvent::Quit);
       }
       ImGui::EndMenu();

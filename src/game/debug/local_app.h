@@ -12,6 +12,6 @@ namespace game::debug {
 using DebugGuiApp =
     sai::task::LocalApp<sai::core::Frame*, sai::task::Scheduler*,
                         sai::ecs::Registry*, sai::debug::PerformanceProfiler*,
-                        sai::task::Event<sai::video::WindowEvent>>;
+                        sai::task::EventWriter<sai::video::WindowEvent>>;
 
 }  // namespace game::debug

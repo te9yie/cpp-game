@@ -68,6 +68,16 @@ struct arg_traits<const T*> {
   static void set_type_bits(ArgsTypeBits* bits) { bits->set_read<T>(); }
   static const T* to(const Context* ctx, TaskWork*) { return ctx->get<T>(); }
 };
+template <typename T>
+struct arg_traits<T&> {
+  static void set_type_bits(ArgsTypeBits* bits) { bits->set_write<T>(); }
+  static T& to(const Context* ctx, TaskWork*) { return *ctx->get<T>(); }
+};
+template <typename T>
+struct arg_traits<const T&> {
+  static void set_type_bits(ArgsTypeBits* bits) { bits->set_read<T>(); }
+  static const T& to(const Context* ctx, TaskWork*) { return *ctx->get<T>(); }
+};
 
 namespace args_ {
 

@@ -6,7 +6,7 @@ namespace game::debug {
 
 /*virtual*/ void PerformanceWindow::on_render(
     const DebugGuiApp& app) /*override*/ {
-  auto profiler = app.get_context<sai::debug::PerformanceProfiler>();
+  auto profiler = app.get<sai::debug::PerformanceProfiler*>();
   profiler->render_debug_gui();
 }
 
