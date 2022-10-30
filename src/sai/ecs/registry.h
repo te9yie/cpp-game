@@ -16,7 +16,7 @@ namespace sai::ecs {
 // Registry.
 class Registry : private t9::NonCopyable {
  private:
-  std::vector<EntityStorage> entities_;
+  EntityStorage entries_;
   std::deque<std::size_t> free_indices_;
   std::vector<std::unique_ptr<Archetype>> archetypes_;
   std::vector<std::unique_ptr<Chunk>> chunks_;
@@ -32,49 +32,49 @@ class Registry : private t9::NonCopyable {
     auto index = create_entity_index();
     auto chunk_index = chunk->create();
 
-    EntityId id = {entities_[index].generation, index};
-    entities_[index].chunk = chunk;
-    entities_[index].chunk_index = chunk_index;
+    EntityId id = {entries_[index].generation, index};
+    entries_[index].chunk = chunk;
+    entries_[index].chunk_index = chunk_index;
     *chunk->template get<EntityId>(chunk_index) = id;
 
     return id;
   }
 
   bool destroy_entity(EntityId id) {
-    if (id.index >= entities_.size()) return false;
-    if (id.generation != entities_[id.index].generation) return false;
+    if (id.index >= entries_.size()) return false;
+    if (id.generation != entries_[id.index].generation) return false;
 
-    auto& storage = entities_[id.index];
-    storage.chunk->destroy(storage.chunk_index);
+    auto& entry = entries_[id.index];
+    entry.chunk->destroy(entry.chunk_index);
 
     free_indices_.push_back(id.index);
-    storage.generation = std::max<size_t>(id.generation + 1, 1);
-    storage.chunk = nullptr;
-    storage.chunk_index = 0;
+    entry.generation = std::max<size_t>(id.generation + 1, 1);
+    entry.chunk = nullptr;
+    entry.chunk_index = 0;
 
     return true;
   }
 
   void destroy_all_entities() {
-    for (auto& entity : entities_) {
+    for (auto& entity : entries_) {
       if (!entity.chunk) continue;
       entity.chunk->destroy(entity.chunk_index);
     }
-    entities_.clear();
+    entries_.clear();
     free_indices_.clear();
   }
 
   template <typename T>
   T* get(EntityId id) const {
-    if (id.index >= entities_.size()) return nullptr;
-    if (id.generation != entities_[id.index].generation) return nullptr;
-    auto& storage = entities_[id.index];
-    return storage.chunk->get<T>(storage.chunk_index);
+    if (id.index >= entries_.size()) return nullptr;
+    if (id.generation != entries_[id.index].generation) return nullptr;
+    auto& entry = entries_[id.index];
+    return entry.chunk->get<T>(entry.chunk_index);
   }
 
   template <typename... Ts>
   Query<Ts...> query() {
-    return Query<Ts...>(for_iter_);
+    return Query<Ts...>(&entries_, for_iter_);
   }
 
  private:
@@ -106,8 +106,8 @@ class Registry : private t9::NonCopyable {
   std::size_t create_entity_index() {
     size_t index = 0;
     if (free_indices_.empty()) {
-      index = entities_.size();
-      entities_.emplace_back().generation = 1;
+      index = entries_.size();
+      entries_.emplace_back().generation = 1;
     } else {
       index = free_indices_.front();
       free_indices_.pop_front();
@@ -126,7 +126,7 @@ class Registry : private t9::NonCopyable {
 
  public:
   void render_debug_gui() {
-    auto entity_capacity = entities_.size();
+    auto entity_capacity = entries_.size();
     auto entity_count = entity_capacity - free_indices_.size();
     ImGui::Text("Entity: %zu/%zu", entity_count, entity_capacity);
     ImGui::Text("Archetype: %zu", archetypes_.size());

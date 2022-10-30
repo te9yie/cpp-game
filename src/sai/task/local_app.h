@@ -2,6 +2,7 @@
 #include "args.h"
 #include "context.h"
 #include "event.h"
+#include "t9/type_list.h"
 
 namespace sai::task {
 
@@ -18,6 +19,8 @@ class LocalApp final {
 
   template <typename U>
   U get() const {
+    static_assert(t9::contains_type<U, t9::type_list<Ts...>>::value,
+                  "U is not included LocalApp");
     return arg_traits<U>::to(ctx_, work_);
   }
 };

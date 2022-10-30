@@ -5,6 +5,7 @@
 #include "entity.h"
 #include "t9/func_traits.h"
 #include "t9/type_list.h"
+#include "type.h"
 
 namespace sai::ecs {
 
@@ -70,18 +71,29 @@ class QueryIterator {
 template <typename... Ts>
 class Query {
  private:
-  using query_type = t9::type_list<Ts...>;
+  using QueryType = t9::type_list<ecs_traits_t<Ts>...>;
 
  private:
+  EntityStorage* entries_ = nullptr;
   Chunk* chunk_ = nullptr;
 
  public:
-  explicit Query(Chunk* chunk) {
+  explicit Query(EntityStorage* entries, Chunk* chunk) : entries_(entries) {
     for (auto it = chunk; it && !chunk_; it = it->next_chunk()) {
       if (it->contains<Ts...>()) {
         chunk_ = it;
       }
     }
+  }
+
+  template <typename T>
+  T* get(EntityId id) const {
+    static_assert(t9::contains_type<T, QueryType>::value,
+                  "T is not included Query");
+    if (id.index >= entries_->size()) return nullptr;
+    if (id.generation != entries_->at(id.index).generation) return nullptr;
+    auto& entry = entries_->at(id.index);
+    return entry.chunk->get<T>(entry.chunk_index);
   }
 
   template <typename F>

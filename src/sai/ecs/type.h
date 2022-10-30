@@ -51,6 +51,7 @@ inline void sort_type_array(const Type* (&types)[N]) {
             });
 }
 
+// ecs_traits.
 template <typename T>
 struct ecs_traits {
   using type = T;
@@ -65,5 +66,8 @@ template <typename T>
 struct ecs_traits<const T&> {
   using type = T;
 };
+
+template <typename T>
+using ecs_traits_t = typename ecs_traits<T>::type;
 
 }  // namespace sai::ecs
