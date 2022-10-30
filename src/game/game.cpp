@@ -127,7 +127,7 @@ void preset_game(sai::task::App* app) {
 
   app->add_task("create rects", create_rects);
   app->add_task("update movecomponents", update_movement);
-  app->add_task("apply sprites", update_sprites);
+  app->add_task("update sprites", update_sprites);
   app->add_task("render debug gui -main-", render_debug_gui);
 
   app->preset(debug::preset_debug);
