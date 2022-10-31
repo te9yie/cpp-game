@@ -50,7 +50,7 @@ struct ArgsTypeBits {
 };
 
 // TaskWork.
-using TaskWork = Context;
+using TaskWork = ContextBase<struct TaskTag>;
 
 // arg_traits.
 template <typename T>

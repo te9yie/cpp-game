@@ -2,11 +2,10 @@
 #include <functional>
 
 #include "args.h"
+#include "context.h"
 #include "t9/noncopyable.h"
 
 namespace sai::task {
-
-class Context;
 
 // SetupTask.
 class SetupTask : private t9::NonCopyable {

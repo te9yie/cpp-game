@@ -10,11 +10,11 @@
 
 #include "../job/job.h"
 #include "args.h"
+#include "context.h"
 #include "t9/noncopyable.h"
 
-namespace sai::task {
 
-class Context;
+namespace sai::task {
 
 // TaskOption.
 struct TaskOption {

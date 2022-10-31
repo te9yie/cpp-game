@@ -6,11 +6,10 @@
 #include <string_view>
 #include <vector>
 
+#include "context.h"
 #include "task.h"
 
 namespace sai::task {
-
-class Context;
 
 struct FirstPhase {};
 struct PreUpdatePhase {};

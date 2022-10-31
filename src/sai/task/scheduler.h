@@ -2,11 +2,10 @@
 #include <list>
 #include <memory>
 
+#include "context.h"
 #include "phase.h"
 
 namespace sai::task {
-
-class Context;
 
 // Scheduler.
 struct Scheduler {

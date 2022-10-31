@@ -6,8 +6,9 @@
 
 namespace sai::task {
 
-// Context.
-class Context final : private t9::NonCopyable {
+// ContextBase.
+template <typename Tag>
+class ContextBase final : private t9::NonCopyable {
  public:
   // type2index.
   template <typename T>
@@ -32,7 +33,7 @@ class Context final : private t9::NonCopyable {
   std::vector<std::unique_ptr<EntryBase>> storage_;
 
  public:
-  ~Context() {
+  ~ContextBase() {
     for (auto it = storage_.rbegin(), last = storage_.rend(); it != last;
          ++it) {
       it->reset();
@@ -58,5 +59,7 @@ class Context final : private t9::NonCopyable {
     return &e->x;
   }
 };
+
+using Context = ContextBase<struct AppTag>;
 
 }  // namespace sai::task
