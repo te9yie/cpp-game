@@ -11,14 +11,14 @@
 
 namespace sai::task {
 
-struct FirstPhase {};
-struct PreUpdatePhase {};
-struct UpdatePhase {};
-struct PostUpdatePhase {};
-struct PreRenderPhase {};
-struct RenderPhase {};
-struct PostRenderPhase {};
-struct LastPhase {};
+struct FirstPhase;
+struct PreUpdatePhase;
+struct UpdatePhase;
+struct PostUpdatePhase;
+struct PreRenderPhase;
+struct RenderPhase;
+struct PostRenderPhase;
+struct LastPhase;
 
 // phase_index_type.
 using phase_index_type = std::uintptr_t;
