@@ -17,6 +17,13 @@ inline T rand_i(int min, int max) {
 
 struct CreateRect {};
 struct ClearRects {};
+struct DestroyEntity {
+  sai::ecs::EntityId id;
+};
+
+struct Score {
+  int score = 0;
+};
 
 struct MovementComponent {
   int x;
@@ -40,7 +47,8 @@ void create_rects(sai::ecs::Registry* registry,
                   sai::graphics::SpriteStorage* sprites,
                   const sai::video::RenderSize* size,
                   sai::task::EventReader<CreateRect> create,
-                  sai::task::EventReader<ClearRects> clear) {
+                  sai::task::EventReader<ClearRects> clear,
+                  sai::task::EventReader<DestroyEntity> destroy) {
   create.each([&](auto) {
     auto id = registry->create_entity<MovementComponent, SpriteComponent>();
 
@@ -60,6 +68,7 @@ void create_rects(sai::ecs::Registry* registry,
       sc->handle = sprites->add(std::move(sprite));
     }
   });
+  destroy.each([&](auto entity) { registry->destroy_entity(entity.id); });
   clear.each([&](auto) { registry->destroy_all_entities(); });
 }
 
@@ -80,6 +89,21 @@ void update_movement(sai::ecs::Query<MovementComponent&> query,
   }
 }
 
+void click_check(
+    const sai::input::MouseState* mouse,
+    sai::ecs::Query<sai::ecs::EntityId, const SpriteComponent&> query,
+    const sai::graphics::SpriteStorage* sprites, Score* score,
+    sai::task::EventWriter<DestroyEntity> writer) {
+  SDL_Point p{mouse->x, mouse->y};
+  for (auto [id, sc] : query) {
+    auto sprite = sprites->get(sc.handle);
+    if (SDL_PointInRect(&p, &sprite->rect)) {
+      score->score += 100;
+      writer.notify(DestroyEntity{id});
+    }
+  }
+}
+
 void update_sprites(
     sai::ecs::Query<const MovementComponent&, SpriteComponent&> query,
     sai::graphics::SpriteStorage* sprites) {
@@ -91,6 +115,7 @@ void update_sprites(
 }
 
 void render_debug_gui(sai::debug::Gui*, const sai::input::MouseState* mouse,
+                      const Score* score,
                       sai::task::EventWriter<CreateRect> create,
                       sai::task::EventWriter<ClearRects> clear) {
   ImGui::Begin("Debug");
@@ -112,8 +137,12 @@ void render_debug_gui(sai::debug::Gui*, const sai::input::MouseState* mouse,
   if (ImGui::Button("Clear")) {
     clear.notify(ClearRects{});
   }
+
   ImGui::Separator();
   ImGui::Text("mouse: %d, %d", mouse->x, mouse->y);
+
+  ImGui::Separator();
+  ImGui::Text("Score: %d", score->score);
 
   ImGui::End();
 }
@@ -124,15 +153,18 @@ namespace game {
 
 void preset_game(sai::task::App* app) {
   app->add_context<sai::ecs::Registry>();
+  app->add_context<Score>();
 
   app->add_event<CreateRect>();
   app->add_event<ClearRects>();
+  app->add_event<DestroyEntity>();
 
   app->add_setup_task(setup_rects);
 
   app->add_task("create rects", create_rects);
   app->add_task("update movecomponents", update_movement);
   app->add_task("update sprites", update_sprites);
+  app->add_task("click check", click_check);
   app->add_task("render debug gui -main-", render_debug_gui);
 
   app->preset(debug::preset_debug);
