@@ -5,6 +5,7 @@
 #include "../core/core.h"
 #include "../debug/gui.h"
 #include "../graphics/sprite.h"
+#include "../input/mouse.h"
 #include "../video/video.h"
 #include "executor.h"
 #include "scheduler.h"
@@ -26,6 +27,7 @@ App::App() {
   preset(core::preset_core);
   preset(preset_executor);
   preset(video::preset_video);
+  preset(input::preset_input);
   preset(graphics::preset_graphics);
   preset(debug::preset_debug_gui);
 }

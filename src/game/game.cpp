@@ -5,6 +5,7 @@
 #include "debug/manager.h"
 #include "sai/ecs/registry.h"
 #include "sai/graphics/sprite.h"
+#include "sai/input/mouse.h"
 #include "sai/task/app.h"
 
 namespace {
@@ -89,7 +90,7 @@ void update_sprites(
   }
 }
 
-void render_debug_gui(sai::debug::Gui*,
+void render_debug_gui(sai::debug::Gui*, const sai::input::MouseState* mouse,
                       sai::task::EventWriter<CreateRect> create,
                       sai::task::EventWriter<ClearRects> clear) {
   ImGui::Begin("Debug");
@@ -111,6 +112,9 @@ void render_debug_gui(sai::debug::Gui*,
   if (ImGui::Button("Clear")) {
     clear.notify(ClearRects{});
   }
+  ImGui::Separator();
+  ImGui::Text("mouse: %d, %d", mouse->x, mouse->y);
+
   ImGui::End();
 }
 
