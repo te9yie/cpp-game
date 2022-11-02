@@ -25,7 +25,7 @@ using RendererPtr = std::unique_ptr<SDL_Renderer, DestroyRenderer>;
 
 // VideoSystem.
 struct VideoSystem {
-  t9::Defer shutdown_system;
+  t9::Defer shutdown;
   WindowPtr window;
   RendererPtr renderer;
 };

@@ -18,7 +18,7 @@ void Scheduler::add_task(phase_index_type index, std::shared_ptr<Task> task) {
   (*it)->tasks.emplace_back(std::move(task));
 }
 
-void Scheduler::run(const Context* ctx) {
+void Scheduler::run(const AppContext* ctx) {
   std::for_each(phases.begin(), phases.end(),
                 [ctx](auto& phase) { phase->run(ctx); });
 }

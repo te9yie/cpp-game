@@ -23,7 +23,6 @@ class Executor : private t9::NonCopyable, public JobObserver {
   sync::MutexPtr mutex_;
   sync::ConditionPtr condition_;
   volatile bool is_stop_ = false;
-  volatile bool notify_ = false;
 
  public:
   explicit Executor(std::string_view name);

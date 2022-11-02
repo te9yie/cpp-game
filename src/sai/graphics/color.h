@@ -3,7 +3,7 @@
 
 namespace sai::graphics {
 
-struct RGBA {
+struct Rgba {
   Uint8 r;
   Uint8 g;
   Uint8 b;

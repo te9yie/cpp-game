@@ -13,7 +13,7 @@ struct Scheduler {
 
   void setup_task_dependencies();
   void add_task(phase_index_type index, std::shared_ptr<Task> task);
-  void run(const Context* ctx);
+  void run(const AppContext* ctx);
   void render_debug_gui();
 };
 

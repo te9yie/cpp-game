@@ -13,7 +13,7 @@ namespace sai::graphics {
 // Sprite.
 struct Sprite {
   SDL_Rect rect;
-  std::unique_ptr<Material> material;
+  Material material;
 };
 
 // SpriteStorage.

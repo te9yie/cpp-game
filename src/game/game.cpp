@@ -51,11 +51,12 @@ void create_rects(sai::ecs::Registry* registry,
     }
 
     if (auto sc = registry->get<SpriteComponent>(id)) {
-      SDL_Rect rect{0, 0, 10, 10};
-      sai::graphics::RGBA color{rand_i<Uint8>(0, 0xff), rand_i<Uint8>(0, 0xff),
-                                rand_i<Uint8>(0, 0xff), 0xff};
-      auto mat = std::make_unique<sai::graphics::ColorMaterial>(color);
-      sc->handle = sprites->create(sai::graphics::Sprite{rect, std::move(mat)});
+      auto sprite = std::make_unique<sai::graphics::Sprite>();
+      sprite->rect = SDL_Rect{0, 0, 10, 10};
+      sprite->material.color =
+          sai::graphics::Rgba{rand_i<Uint8>(0, 0xff), rand_i<Uint8>(0, 0xff),
+                              rand_i<Uint8>(0, 0xff), 0xff};
+      sc->handle = sprites->add(std::move(sprite));
     }
   });
   clear.each([&](auto) { registry->destroy_all_entities(); });

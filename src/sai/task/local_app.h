@@ -10,11 +10,11 @@ namespace sai::task {
 template <typename... Ts>
 class LocalApp final {
  private:
-  const Context* ctx_ = nullptr;
+  const AppContext* ctx_ = nullptr;
   TaskWork* work_ = nullptr;
 
  public:
-  explicit LocalApp(const Context* ctx, TaskWork* work)
+  explicit LocalApp(const AppContext* ctx, TaskWork* work)
       : ctx_(ctx), work_(work) {}
 
   template <typename U>
@@ -37,7 +37,7 @@ struct arg_traits<LocalApp<Ts...>> {
   static void set_type_bits(ArgsTypeBits* bits) {
     set_type_bits_(bits, t9::type_list<Ts...>{});
   }
-  static LocalApp<Ts...> to(const Context* ctx, TaskWork* work) {
+  static LocalApp<Ts...> to(const AppContext* ctx, TaskWork* work) {
     return LocalApp<Ts...>(ctx, work);
   }
 };
@@ -47,7 +47,7 @@ struct arg_traits<const LocalApp<Ts...>&> {
   static void set_type_bits(ArgsTypeBits* bits) {
     arg_traits<LocalApp<Ts...>>::set_type_bits(bits);
   }
-  static LocalApp<Ts...> to(const Context* ctx, TaskWork* work) {
+  static LocalApp<Ts...> to(const AppContext* ctx, TaskWork* work) {
     return arg_traits<LocalApp<Ts...>>::to(ctx, work);
   }
 };

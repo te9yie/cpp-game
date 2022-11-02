@@ -92,12 +92,11 @@ class HandleStorage : private HandleObserver, private t9::NonCopyable {
   sync::MutexPtr remove_mutex_;
 
  public:
-  template <typename... Args>
-  Handle<T> create(Args&&... args) {
+  Handle<T> add(std::unique_ptr<T> x) {
     auto index = find_index_();
     auto& entry = entries_[index];
     SDL_AtomicSet(&entry.ref_count, 1);
-    entry.x = std::make_unique<T>(std::forward<Args>(args)...);
+    entry.x = std::move(x);
     return Handle<T>(HandleId{entry.revision, index}, this);
   }
 

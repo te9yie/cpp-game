@@ -1,5 +1,4 @@
 #pragma once
-#include <cassert>
 #include <functional>
 
 #include "noncopyable.h"
@@ -7,26 +6,15 @@
 namespace t9 {
 
 // Defer.
-class Defer final : private NonCopyable {
- private:
+struct Defer final : NonCopyable {
   using FuncType = std::function<void(void)>;
 
- private:
-  FuncType func_;
+  FuncType func;
 
- public:
-  Defer() = default;
-  Defer(const FuncType& f) : func_(f) {}
   ~Defer() {
-    if (func_) {
-      func_();
+    if (func) {
+      func();
     }
-  }
-
-  Defer& operator=(const FuncType& f) {
-    assert(!func_);
-    func_ = f;
-    return *this;
   }
 };
 

@@ -10,7 +10,7 @@
 
 namespace sai::task {
 
-void Phase::run(const Context* ctx) {
+void Phase::run(const AppContext* ctx) {
   if (auto executor = ctx->get<job::Executor>()) {
     std::for_each(tasks.begin(), tasks.end(), [executor, ctx](auto& task) {
       task->set_context(ctx);

@@ -10,16 +10,9 @@
 
 namespace sai::task {
 
-// EventBase.
-class EventBase {
- public:
-  virtual ~EventBase() = default;
-  virtual void update() = 0;
-};
-
 // Event.
 template <typename T>
-class Event : public EventBase {
+class Event {
  public:
   // EventData.
   template <class T>
@@ -39,7 +32,7 @@ class Event : public EventBase {
   std::size_t index_ = 0;
 
  public:
-  virtual void update() override {
+  virtual void update() {
     auto index = 1 - index_;
     events_[index].clear();
     start_index_[index] = count_;
@@ -74,6 +67,12 @@ class Event : public EventBase {
   }
 };
 
+// update_events.
+template <typename T>
+void update_events(Event<T>* e) {
+  e->update();
+}
+
 // EventObserver.
 template <typename T>
 struct EventObserver {
@@ -85,7 +84,7 @@ template <typename T>
 struct EventWriter {
   Event<T>* subject = nullptr;
 
-  EventWriter(const Context* ctx) : subject(ctx->get<Event<T>>()) {}
+  EventWriter(const AppContext* ctx) : subject(ctx->get<Event<T>>()) {}
 
   template <class... Args>
   void notify(Args&&... args) {
@@ -102,7 +101,7 @@ struct EventReader {
   std::size_t* index_ = nullptr;
 
  public:
-  EventReader(const Context* ctx, std::size_t* i)
+  EventReader(const AppContext* ctx, std::size_t* i)
       : subject_(ctx->get<Event<T>>()), index_(i) {}
 
   template <typename F>
@@ -120,7 +119,7 @@ struct EventReader {
 template <typename T>
 struct arg_traits<EventWriter<T>> {
   static void set_type_bits(ArgsTypeBits* bits) { bits->set_write<Event<T>>(); }
-  static EventWriter<T> to(const Context* ctx, TaskWork*) {
+  static EventWriter<T> to(const AppContext* ctx, TaskWork*) {
     return EventWriter<T>(ctx);
   }
 };
@@ -128,7 +127,7 @@ struct arg_traits<EventWriter<T>> {
 template <typename T>
 struct arg_traits<EventReader<T>> {
   static void set_type_bits(ArgsTypeBits* bits) { bits->set_read<Event<T>>(); }
-  static EventReader<T> to(const Context* ctx, TaskWork* work) {
+  static EventReader<T> to(const AppContext* ctx, TaskWork* work) {
     auto o = work->get<EventObserver<T>>();
     if (!o) {
       o = work->add<EventObserver<T>>();

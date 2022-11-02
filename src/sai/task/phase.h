@@ -38,7 +38,7 @@ struct Phase {
   phase_index_type index;
   std::vector<std::shared_ptr<Task>> tasks;
 
-  void run(const Context* ctx);
+  void run(const AppContext* ctx);
   void setup_task_dependencies();
   void render_debug_gui();
 };

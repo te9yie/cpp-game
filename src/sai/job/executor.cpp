@@ -124,7 +124,8 @@ void Executor::exec_jobs_() {
       sync::UniqueLock lock(mutex_.get());
       auto it = std::find_if(jobs_.begin(), jobs_.end(),
                              [](auto& job) { return job->can_exec(); });
-      if (it == jobs_.end() && !is_stop_) {
+      if (it == jobs_.end()) {
+        if (is_stop_) continue;
         SDL_CondWait(condition_.get(), mutex_.get());
         continue;
       }

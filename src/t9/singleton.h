@@ -10,7 +10,7 @@ namespace singleton_ {
 
 // Singleton.
 template <typename T>
-class Singleton : private NonMovable {
+class Singleton : private NonCopyable {
  private:
   static inline T* instance_ = nullptr;
 

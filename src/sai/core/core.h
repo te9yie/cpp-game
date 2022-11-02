@@ -4,12 +4,13 @@
 
 namespace sai::core {
 
-// System.
-struct System {
-  t9::Defer shutdown_system;
+// Core.
+struct Core {
+  t9::Defer shutdown;
 };
 
-bool init_system(System* sys);
+// init_core
+bool init_core(Core* c);
 void preset_core(task::App* app);
 
 }  // namespace sai::core

@@ -170,7 +170,7 @@ struct arg_traits<ecs::Query<Ts...>> {
     bits->set_read<ecs::Registry>();
     set_type_bits_(bits, t9::type_list<Ts...>{});
   }
-  static ecs::Query<Ts...> to(const task::Context* ctx, task::TaskWork*) {
+  static ecs::Query<Ts...> to(const task::AppContext* ctx, task::TaskWork*) {
     return ctx->get<ecs::Registry>()->query<Ts...>();
   }
 };

@@ -18,9 +18,8 @@ namespace sai::task {
 // App.
 class App : private t9::NonCopyable {
  private:
-  Context context_;
+  AppContext context_;
   std::vector<std::unique_ptr<SetupTask>> setup_tasks_;
-  std::vector<EventBase*> events_;
 
  public:
   App();
@@ -37,8 +36,8 @@ class App : private t9::NonCopyable {
 
   template <typename T>
   void add_event() {
-    auto e = add_context<Event<T>>();
-    events_.emplace_back(e);
+    add_context<Event<T>>();
+    add_task_in_phase<FirstPhase>("update events", update_events<T>);
   }
 
   template <typename F>

@@ -6,22 +6,23 @@
 
 namespace sai::task {
 
-// ContextBase.
+// Context.
 template <typename Tag>
-class ContextBase final : private t9::NonCopyable {
- public:
-  // type2index.
+class Context final : private t9::NonCopyable {
+ private:
+  // TypeIndex.
   template <typename T>
-  struct type2index {
+  struct TypeIndex {
     static inline std::size_t index = 0;
   };
 
- private:
   // EntryBase.
   struct EntryBase {
    public:
     virtual ~EntryBase() = default;
   };
+
+  // Entry.
   template <typename T>
   struct Entry : EntryBase {
     T x;
@@ -33,33 +34,32 @@ class ContextBase final : private t9::NonCopyable {
   std::vector<std::unique_ptr<EntryBase>> storage_;
 
  public:
-  ~ContextBase() {
-    for (auto it = storage_.rbegin(), last = storage_.rend(); it != last;
-         ++it) {
-      it->reset();
+  ~Context() {
+    while (!storage_.empty()) {
+      storage_.pop_back();
     }
   }
 
   template <typename T, typename... Args>
   T* add(Args&&... args) {
-    auto i = type2index<T>::index;
+    auto i = TypeIndex<T>::index;
     if (i != 0) return nullptr;
     auto e = std::make_unique<Entry<T>>(std::forward<Args>(args)...);
     auto p = &e->x;
     storage_.emplace_back(std::move(e));
-    type2index<T>::index = storage_.size();
+    TypeIndex<T>::index = storage_.size();
     return p;
   }
 
   template <typename T>
   T* get() const {
-    auto i = type2index<T>::index;
+    auto i = TypeIndex<T>::index;
     if (i == 0) return nullptr;
     auto e = static_cast<Entry<T>*>(storage_[i - 1].get());
     return &e->x;
   }
 };
 
-using Context = ContextBase<struct AppTag>;
+using AppContext = Context<struct AppTag>;
 
 }  // namespace sai::task

@@ -15,10 +15,10 @@ class SetupTask : private t9::NonCopyable {
  public:
   virtual ~SetupTask() = default;
 
-  bool exec(const Context* ctx) { return on_exec(ctx, &work_); }
+  bool exec(const AppContext* ctx) { return on_exec(ctx, &work_); }
 
  protected:
-  virtual bool on_exec(const Context* ctx, TaskWork* work) = 0;
+  virtual bool on_exec(const AppContext* ctx, TaskWork* work) = 0;
 };
 
 // FuncSetupTask.
@@ -34,7 +34,7 @@ class FuncSetupTask : public SetupTask {
   explicit FuncSetupTask(const FuncType& f) : func_(f) {}
 
  protected:
-  virtual bool on_exec(const Context* ctx, TaskWork* work) override {
+  virtual bool on_exec(const AppContext* ctx, TaskWork* work) override {
     return func_(arg_traits<As>::to(ctx, work)...);
   }
 };

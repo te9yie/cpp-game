@@ -17,7 +17,7 @@ bool init_video_system(VideoSystem* sys, const VideoSettings* settings) {
     SDL_LogCritical(SDL_LOG_CATEGORY_SYSTEM, "error: %s", SDL_GetError());
     return false;
   }
-  sys->shutdown_system = []() { SDL_QuitSubSystem(SDL_INIT_VIDEO); };
+  sys->shutdown.func = []() { SDL_QuitSubSystem(SDL_INIT_VIDEO); };
 
   WindowPtr window(SDL_CreateWindow(
       settings->title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,

@@ -42,7 +42,6 @@ bool App::run() {
   auto reader = EventReader<video::WindowEvent>(&context_, &reader_index);
   bool loop = true;
   while (loop) {
-    std::for_each(events_.begin(), events_.end(), [](auto e) { e->update(); });
     reader.each([&loop](video::WindowEvent e) {
       if (e == video::WindowEvent::Quit) {
         loop = false;

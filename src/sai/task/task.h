@@ -13,7 +13,6 @@
 #include "context.h"
 #include "t9/noncopyable.h"
 
-
 namespace sai::task {
 
 // TaskOption.
@@ -45,14 +44,14 @@ class Task : private t9::NonCopyable, public job::Job {
   SDL_threadID exclusive_thread_id_ = 0;
   std::bitset<FLAG_MAX> flags_;
   std::deque<Task*> dependencies_;
-  const Context* context_ = nullptr;
+  const AppContext* context_ = nullptr;
 
  public:
   Task(std::string_view name, const ArgsTypeBits& bits,
        const TaskOption& option);
   virtual ~Task() = default;
 
-  void set_context(const Context* ctx) { context_ = ctx; }
+  void set_context(const AppContext* ctx) { context_ = ctx; }
 
   bool add_dependency(Task* task);
   const std::deque<Task*>& dependencies() const { return dependencies_; }
@@ -63,7 +62,7 @@ class Task : private t9::NonCopyable, public job::Job {
  protected:
   virtual bool on_can_exec() const override;
   virtual void on_exec() override;
-  virtual void on_exec_task(const Context* ctx, TaskWork* work) = 0;
+  virtual void on_exec_task(const AppContext* ctx, TaskWork* work) = 0;
 
  private:
   bool is_depended_(Task* task) const;
@@ -83,7 +82,7 @@ class FuncTask : public Task {
       : Task(name, make_args_type_bits<As...>(), option), func_(f) {}
 
  protected:
-  virtual void on_exec_task(const Context* ctx, TaskWork* work) override {
+  virtual void on_exec_task(const AppContext* ctx, TaskWork* work) override {
     func_(arg_traits<As>::to(ctx, work)...);
   }
 };
