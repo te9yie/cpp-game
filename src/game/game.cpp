@@ -19,9 +19,13 @@ inline T rand_i(int min, int max) {
 
 constexpr int RECT_SIZE = 40;
 
-struct CreateRect {};
-struct ClearRects {};
-struct DestroyEntity {
+struct RectEvent {
+  enum class Type {
+    Create,
+    Destroy,
+    Clear,
+  };
+  Type type;
   sai::ecs::EntityId id;
 };
 
@@ -45,14 +49,13 @@ struct SpriteComponent {
 };
 
 bool setup_font(sai::asset::Manager* mgr, Font* font) {
-  // font->handle = mgr->load("assets/mplus_f12r.bmp");
-  mgr->load("assets/mplus_f12r.bmp");
+  font->handle = mgr->load("assets/mplus_f12r.bmp");
   return true;
 }
 
-bool setup_rects(sai::task::EventWriter<CreateRect> writer) {
+bool setup_rects(sai::task::EventWriter<RectEvent> writer) {
   for (int i = 0; i < 10; ++i) {
-    writer.notify(CreateRect{});
+    writer.notify(RectEvent{RectEvent::Type::Create});
   }
   return true;
 }
@@ -60,30 +63,36 @@ bool setup_rects(sai::task::EventWriter<CreateRect> writer) {
 void create_rects(sai::ecs::Registry* registry,
                   sai::graphics::SpriteStorage* sprites,
                   const sai::video::RenderSize* size,
-                  sai::task::EventReader<CreateRect> create,
-                  sai::task::EventReader<ClearRects> clear,
-                  sai::task::EventReader<DestroyEntity> destroy) {
-  create.each([&](auto) {
-    auto id = registry->create_entity<MovementComponent, SpriteComponent>();
+                  sai::task::EventReader<RectEvent> events) {
+  events.each([&](auto e) {
+    switch (e.type) {
+      case RectEvent::Type::Create: {
+        auto id = registry->create_entity<MovementComponent, SpriteComponent>();
 
-    if (auto mc = registry->get<MovementComponent>(id)) {
-      mc->x = rand_i<int>(0, size->w);
-      mc->y = rand_i<int>(0, size->h);
-      mc->vx = rand_i<int>(1, 3) * (rand_i<int>(0, 1) ? 1 : -1);
-      mc->vy = rand_i<int>(1, 3) * (rand_i<int>(0, 1) ? 1 : -1);
-    }
+        if (auto mc = registry->get<MovementComponent>(id)) {
+          mc->x = rand_i<int>(0, size->w);
+          mc->y = rand_i<int>(0, size->h);
+          mc->vx = rand_i<int>(1, 3) * (rand_i<int>(0, 1) ? 1 : -1);
+          mc->vy = rand_i<int>(1, 3) * (rand_i<int>(0, 1) ? 1 : -1);
+        }
 
-    if (auto sc = registry->get<SpriteComponent>(id)) {
-      auto sprite = std::make_shared<sai::graphics::Sprite>();
-      sprite->rect = SDL_Rect{0, 0, RECT_SIZE, RECT_SIZE};
-      sprite->material.color =
-          sai::graphics::Rgba{rand_i<Uint8>(0, 0xff), rand_i<Uint8>(0, 0xff),
-                              rand_i<Uint8>(0, 0xff), 0xff};
-      sc->handle = sprites->add(std::move(sprite));
+        if (auto sc = registry->get<SpriteComponent>(id)) {
+          auto sprite = std::make_shared<sai::graphics::Sprite>();
+          sprite->rect = SDL_Rect{0, 0, RECT_SIZE, RECT_SIZE};
+          sprite->material.color = sai::graphics::Rgba{
+              rand_i<Uint8>(0, 0xff), rand_i<Uint8>(0, 0xff),
+              rand_i<Uint8>(0, 0xff), 0xff};
+          sc->handle = sprites->add(std::move(sprite));
+        }
+      } break;
+      case RectEvent::Type::Destroy:
+        registry->destroy_entity(e.id);
+        break;
+      case RectEvent::Type::Clear:
+        registry->destroy_all_entities();
+        break;
     }
   });
-  destroy.each([&](auto entity) { registry->destroy_entity(entity.id); });
-  clear.each([&](auto) { registry->destroy_all_entities(); });
 }
 
 void update_movement(sai::ecs::Query<MovementComponent&> query,
@@ -106,7 +115,7 @@ void update_movement(sai::ecs::Query<MovementComponent&> query,
 void click_check(
     const sai::input::MouseState* mouse,
     sai::ecs::Query<sai::ecs::EntityId, const MovementComponent&> query,
-    Score* score, sai::task::EventWriter<DestroyEntity> writer) {
+    Score* score, sai::task::EventWriter<RectEvent> writer) {
   SDL_Point p{mouse->x, mouse->y};
   if ((mouse->buttons & SDL_BUTTON_LMASK) != 0) {
     for (auto [id, mc] : query) {
@@ -114,7 +123,7 @@ void click_check(
                     RECT_SIZE};
       if (SDL_PointInRect(&p, &rect)) {
         score->score += 100;
-        writer.notify(DestroyEntity{id});
+        writer.notify(RectEvent{RectEvent::Type::Destroy, id});
       }
     }
   }
@@ -131,26 +140,25 @@ void update_sprites(
 }
 
 void render_debug_gui(sai::debug::Gui*, const sai::input::MouseState* mouse,
-                      Score* score, sai::task::EventWriter<CreateRect> create,
-                      sai::task::EventWriter<ClearRects> clear) {
+                      Score* score, sai::task::EventWriter<RectEvent> writer) {
   ImGui::Begin("Debug");
   if (ImGui::Button("Create 1")) {
-    create.notify(CreateRect{});
+    writer.notify(RectEvent{RectEvent::Type::Create});
   }
   ImGui::SameLine();
   if (ImGui::Button("Create 10")) {
     for (int i = 0; i < 10; ++i) {
-      create.notify(CreateRect{});
+      writer.notify(RectEvent{RectEvent::Type::Create});
     }
   }
   ImGui::SameLine();
   if (ImGui::Button("Create 100")) {
     for (int i = 0; i < 100; ++i) {
-      create.notify(CreateRect{});
+      writer.notify(RectEvent{RectEvent::Type::Create});
     }
   }
   if (ImGui::Button("Clear")) {
-    clear.notify(ClearRects{});
+    writer.notify(RectEvent{RectEvent::Type::Clear});
   }
 
   ImGui::Separator();
@@ -175,9 +183,7 @@ void preset_game(sai::task::App* app) {
   app->add_context<Font>();
   app->add_context<Score>();
 
-  app->add_event<CreateRect>();
-  app->add_event<ClearRects>();
-  app->add_event<DestroyEntity>();
+  app->add_event<RectEvent>();
 
   app->add_setup_task(setup_font);
   app->add_setup_task(setup_rects);
