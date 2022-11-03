@@ -1,8 +1,5 @@
 #include "video.h"
 
-#include "../debug/gui.h"
-#include "../task/app.h"
-#include "../task/executor.h"
 #include "imgui_impl_sdl.h"
 
 namespace sai::video {
@@ -64,20 +61,5 @@ void begin_render(VideoSystem* sys) {
 }
 
 void end_render(VideoSystem* sys) { SDL_RenderPresent(sys->renderer.get()); }
-
-void preset_video(task::App* app) {
-  app->add_context<VideoSystem>();
-  app->add_context<RenderSize>();
-
-  app->add_event<WindowEvent>();
-
-  app->add_setup_task(init_video_system);
-  app->add_task_in_phase<task::FirstPhase>(
-      "handle events", handle_events,
-      task::TaskOption().exclusive_this_thread());
-  app->add_task_in_phase<task::PreRenderPhase>("== begin render", begin_render);
-  app->add_task_in_phase<task::LastPhase>(
-      "== end render", end_render, task::TaskOption().exclusive_this_thread());
-}
 
 }  // namespace sai::video

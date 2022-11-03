@@ -7,6 +7,7 @@
 #include "../task/fwd.h"
 #include "../video/video.h"
 #include "material.h"
+#include "texture.h"
 
 namespace sai::graphics {
 
@@ -20,8 +21,7 @@ struct Sprite {
 using SpriteHandle = Handle<Sprite>;
 using SpriteStorage = HandleStorage<Sprite>;
 
-void render_sprites(video::VideoSystem* sys, SpriteStorage* sprites);
-
-void preset_graphics(task::App* app);
+void render_sprites(video::VideoSystem* sys, const SpriteStorage* sprites,
+                    const TextureStorage* textures);
 
 }  // namespace sai::graphics

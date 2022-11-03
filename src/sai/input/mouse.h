@@ -14,6 +14,4 @@ struct MouseState {
 
 void update_mouse(MouseState* state);
 
-void preset_input(task::App* app);
-
 }  // namespace sai::input

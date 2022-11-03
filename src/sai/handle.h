@@ -57,6 +57,8 @@ struct Handle final {
     }
   }
 
+  explicit operator bool() const { return id.is_valid(); }
+
   Handle& operator=(const Handle& rhs) {
     Handle(rhs).swap(*this);
     return *this;
@@ -153,7 +155,7 @@ class HandleStorage : private HandleObserver, private t9::NonCopyable {
   }
 
   template <typename F>
-  void each(F f) {
+  void each(F f) const {
     std::for_each(entries_.begin(), entries_.end(),
                   [f](const HandleEntry<T>& e) {
                     if (e.x) {

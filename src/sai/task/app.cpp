@@ -3,10 +3,11 @@
 #include <algorithm>
 
 #include "../asset/fwd.h"
-#include "../core/core.h"
-#include "../debug/gui.h"
-#include "../graphics/sprite.h"
-#include "../input/mouse.h"
+#include "../core/fwd.h"
+#include "../debug/fwd.h"
+#include "../graphics/fwd.h"
+#include "../input/fwd.h"
+#include "../video/fwd.h"
 #include "../video/video.h"
 #include "executor.h"
 #include "scheduler.h"

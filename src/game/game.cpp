@@ -4,7 +4,6 @@
 
 #include "debug/manager.h"
 #include "sai/asset/asset.h"
-#include "sai/asset/fwd.h"
 #include "sai/asset/manager.h"
 #include "sai/ecs/registry.h"
 #include "sai/graphics/sprite.h"

@@ -4,9 +4,8 @@
 #include <memory>
 #include <string>
 
-#include "../debug/fwd.h"
+#include "../debug/gui.h"
 #include "../task/event.h"
-#include "../task/fwd.h"
 #include "t9/defer.h"
 
 namespace sai::video {
@@ -55,6 +54,5 @@ void handle_events(VideoSystem* sys, RenderSize* size,
                    task::EventWriter<WindowEvent> writer, debug::Gui*);
 void begin_render(VideoSystem* sys);
 void end_render(VideoSystem* sys);
-void preset_video(task::App* app);
 
 }  // namespace sai::video

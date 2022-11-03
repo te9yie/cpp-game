@@ -1,5 +1,4 @@
 #pragma once
-#include "../task/fwd.h"
 #include "t9/defer.h"
 
 namespace sai::core {
@@ -11,6 +10,5 @@ struct Core {
 
 // init_core
 bool init_core(Core* c);
-void preset_core(task::App* app);
 
 }  // namespace sai::core

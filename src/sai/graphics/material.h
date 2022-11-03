@@ -2,6 +2,7 @@
 #include <SDL.h>
 
 #include "color.h"
+#include "texture.h"
 
 namespace sai::graphics {
 
@@ -9,6 +10,8 @@ namespace sai::graphics {
 struct Material {
   Rgba color;
   bool wireframe = false;
+  TextureHandle texture;
+  SDL_Rect texture_uv;
 };
 
 }  // namespace sai::graphics
