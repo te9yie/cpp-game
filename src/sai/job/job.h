@@ -50,19 +50,4 @@ class Job {
   virtual void on_exec() = 0;
 };
 
-// FuncJob.
-class FuncJob : public Job {
- private:
-  using FuncType = std::function<void(void)>;
-
- private:
-  FuncType func_;
-
- public:
-  FuncJob(std::string_view name, const FuncType& f) : Job(name), func_(f) {}
-
- protected:
-  virtual void on_exec() override { func_(); }
-};
-
 }  // namespace sai::job

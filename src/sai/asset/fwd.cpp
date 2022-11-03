@@ -7,6 +7,7 @@ namespace sai::asset {
 
 void preset_asset(task::App* app) {
   app->add_context<Manager>();
+  app->add_setup_task(init_manager);
   app->add_task_in_phase<task::FirstPhase>("update asset manager",
                                            update_manager);
 }

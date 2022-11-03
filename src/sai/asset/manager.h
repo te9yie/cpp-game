@@ -2,6 +2,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "../job/executor.h"
 #include "asset.h"
 #include "t9/noncopyable.h"
 
@@ -15,8 +16,14 @@ class Manager : private t9::NonCopyable, private AssetRemoveObserver {
  private:
   AssetStorage assets_;
   PathMap path_map_;
+  job::Executor executor_;
 
  public:
+  Manager();
+
+  bool start();
+  void stop();
+
   AssetHandle load(std::string_view path);
   AssetHandle find(std::string_view path);
 
@@ -24,9 +31,10 @@ class Manager : private t9::NonCopyable, private AssetRemoveObserver {
 
  private:
   // AssetRemoveObserver.
-  virtual void on_remove(Asset* asset) override;
+  virtual void on_remove(HandleId id, std::shared_ptr<Asset> asset) override;
 };
 
+bool init_manager(Manager* manager);
 void update_manager(Manager* manager);
 
 }  // namespace sai::asset

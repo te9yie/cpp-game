@@ -3,7 +3,9 @@
 #include <algorithm>
 
 #include "debug/manager.h"
+#include "sai/asset/asset.h"
 #include "sai/asset/fwd.h"
+#include "sai/asset/manager.h"
 #include "sai/ecs/registry.h"
 #include "sai/graphics/sprite.h"
 #include "sai/input/mouse.h"
@@ -24,6 +26,10 @@ struct DestroyEntity {
   sai::ecs::EntityId id;
 };
 
+struct Font {
+  sai::asset::AssetHandle handle;
+};
+
 struct Score {
   int score = 0;
 };
@@ -38,6 +44,12 @@ struct MovementComponent {
 struct SpriteComponent {
   sai::graphics::SpriteHandle handle;
 };
+
+bool setup_font(sai::asset::Manager* mgr, Font* font) {
+  // font->handle = mgr->load("assets/mplus_f12r.bmp");
+  mgr->load("assets/mplus_f12r.bmp");
+  return true;
+}
 
 bool setup_rects(sai::task::EventWriter<CreateRect> writer) {
   for (int i = 0; i < 10; ++i) {
@@ -63,7 +75,7 @@ void create_rects(sai::ecs::Registry* registry,
     }
 
     if (auto sc = registry->get<SpriteComponent>(id)) {
-      auto sprite = std::make_unique<sai::graphics::Sprite>();
+      auto sprite = std::make_shared<sai::graphics::Sprite>();
       sprite->rect = SDL_Rect{0, 0, RECT_SIZE, RECT_SIZE};
       sprite->material.color =
           sai::graphics::Rgba{rand_i<Uint8>(0, 0xff), rand_i<Uint8>(0, 0xff),
@@ -161,12 +173,14 @@ namespace game {
 
 void preset_game(sai::task::App* app) {
   app->add_context<sai::ecs::Registry>();
+  app->add_context<Font>();
   app->add_context<Score>();
 
   app->add_event<CreateRect>();
   app->add_event<ClearRects>();
   app->add_event<DestroyEntity>();
 
+  app->add_setup_task(setup_font);
   app->add_setup_task(setup_rects);
 
   app->add_task("create rects", create_rects);

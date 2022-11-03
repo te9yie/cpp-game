@@ -78,7 +78,7 @@ template <typename T>
 struct HandleEntry {
   SDL_atomic_t ref_count;
   std::size_t revision = 0;
-  std::unique_ptr<T> x;
+  std::shared_ptr<T> x;
 };
 
 // HandleRemoveObserver.
@@ -86,7 +86,7 @@ template <typename T>
 class HandleRemoveObserver {
  public:
   virtual ~HandleRemoveObserver() = default;
-  virtual void on_remove(T* p) = 0;
+  virtual void on_remove(HandleId id, std::shared_ptr<T> p) = 0;
 };
 
 // HandleStorage
@@ -100,7 +100,7 @@ class HandleStorage : private HandleObserver, private t9::NonCopyable {
   sync::MutexPtr remove_mutex_;
 
  public:
-  Handle<T> add(std::unique_ptr<T> x) {
+  Handle<T> add(std::shared_ptr<T> x) {
     auto index = find_index_();
     auto& entry = entries_[index];
     SDL_AtomicSet(&entry.ref_count, 1);
@@ -116,7 +116,7 @@ class HandleStorage : private HandleObserver, private t9::NonCopyable {
       if (entry.revision != id.revision) continue;
       if (SDL_AtomicGet(&entry.ref_count) > 0) continue;
       if (observer) {
-        observer->on_remove(entry.x.get());
+        observer->on_remove(id, entry.x);
       }
       entry.revision = std::max<std::size_t>(entry.revision + 1, 1);
       entry.x.reset();
