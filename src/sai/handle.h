@@ -114,7 +114,13 @@ class HandleStorage : private HandleObserver, private t9::NonCopyable {
     remove_ids_.clear();
   }
 
-  T* get(const Handle<T>& handle) const {
+  const T* get(const Handle<T>& handle) const {
+    assert(handle.id.index < entries_.size());
+    auto& entry = entries_[handle.id.index];
+    if (handle.id.revision != entry.revision) return nullptr;
+    return entry.x.get();
+  }
+  T* get_mut(const Handle<T>& handle) {
     assert(handle.id.index < entries_.size());
     auto& entry = entries_[handle.id.index];
     if (handle.id.revision != entry.revision) return nullptr;

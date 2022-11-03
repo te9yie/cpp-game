@@ -15,6 +15,8 @@ inline T rand_i(int min, int max) {
   return static_cast<T>(std::rand() % (max - min) + min);
 }
 
+constexpr int RECT_SIZE = 40;
+
 struct CreateRect {};
 struct ClearRects {};
 struct DestroyEntity {
@@ -61,7 +63,7 @@ void create_rects(sai::ecs::Registry* registry,
 
     if (auto sc = registry->get<SpriteComponent>(id)) {
       auto sprite = std::make_unique<sai::graphics::Sprite>();
-      sprite->rect = SDL_Rect{0, 0, 10, 10};
+      sprite->rect = SDL_Rect{0, 0, RECT_SIZE, RECT_SIZE};
       sprite->material.color =
           sai::graphics::Rgba{rand_i<Uint8>(0, 0xff), rand_i<Uint8>(0, 0xff),
                               rand_i<Uint8>(0, 0xff), 0xff};
@@ -91,15 +93,17 @@ void update_movement(sai::ecs::Query<MovementComponent&> query,
 
 void click_check(
     const sai::input::MouseState* mouse,
-    sai::ecs::Query<sai::ecs::EntityId, const SpriteComponent&> query,
-    const sai::graphics::SpriteStorage* sprites, Score* score,
-    sai::task::EventWriter<DestroyEntity> writer) {
+    sai::ecs::Query<sai::ecs::EntityId, const MovementComponent&> query,
+    Score* score, sai::task::EventWriter<DestroyEntity> writer) {
   SDL_Point p{mouse->x, mouse->y};
-  for (auto [id, sc] : query) {
-    auto sprite = sprites->get(sc.handle);
-    if (SDL_PointInRect(&p, &sprite->rect)) {
-      score->score += 100;
-      writer.notify(DestroyEntity{id});
+  if ((mouse->buttons & SDL_BUTTON_LMASK) != 0) {
+    for (auto [id, mc] : query) {
+      SDL_Rect rect{mc.x - RECT_SIZE / 2, mc.y - RECT_SIZE / 2, RECT_SIZE,
+                    RECT_SIZE};
+      if (SDL_PointInRect(&p, &rect)) {
+        score->score += 100;
+        writer.notify(DestroyEntity{id});
+      }
     }
   }
 }
@@ -108,29 +112,28 @@ void update_sprites(
     sai::ecs::Query<const MovementComponent&, SpriteComponent&> query,
     sai::graphics::SpriteStorage* sprites) {
   for (auto [mc, sc] : query) {
-    auto sprite = sprites->get(sc.handle);
-    sprite->rect.x = mc.x - 5;
-    sprite->rect.y = mc.y - 5;
+    auto sprite = sprites->get_mut(sc.handle);
+    sprite->rect.x = mc.x - RECT_SIZE / 2;
+    sprite->rect.y = mc.y - RECT_SIZE / 2;
   }
 }
 
 void render_debug_gui(sai::debug::Gui*, const sai::input::MouseState* mouse,
-                      const Score* score,
-                      sai::task::EventWriter<CreateRect> create,
+                      Score* score, sai::task::EventWriter<CreateRect> create,
                       sai::task::EventWriter<ClearRects> clear) {
   ImGui::Begin("Debug");
   if (ImGui::Button("Create 1")) {
     create.notify(CreateRect{});
   }
   ImGui::SameLine();
-  if (ImGui::Button("Create 100")) {
-    for (int i = 0; i < 100; ++i) {
+  if (ImGui::Button("Create 10")) {
+    for (int i = 0; i < 10; ++i) {
       create.notify(CreateRect{});
     }
   }
   ImGui::SameLine();
-  if (ImGui::Button("Create 10000")) {
-    for (int i = 0; i < 10000; ++i) {
+  if (ImGui::Button("Create 100")) {
+    for (int i = 0; i < 100; ++i) {
       create.notify(CreateRect{});
     }
   }
@@ -142,6 +145,10 @@ void render_debug_gui(sai::debug::Gui*, const sai::input::MouseState* mouse,
   ImGui::Text("mouse: %d, %d", mouse->x, mouse->y);
 
   ImGui::Separator();
+  if (ImGui::Button("Reset")) {
+    score->score = 0;
+  }
+  ImGui::SameLine();
   ImGui::Text("Score: %d", score->score);
 
   ImGui::End();
