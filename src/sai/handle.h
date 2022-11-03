@@ -81,6 +81,14 @@ struct HandleEntry {
   std::unique_ptr<T> x;
 };
 
+// HandleRemoveObserver.
+template <typename T>
+class HandleRemoveObserver {
+ public:
+  virtual ~HandleRemoveObserver() = default;
+  virtual void on_remove(T* p) = 0;
+};
+
 // HandleStorage
 template <typename T>
 class HandleStorage : private HandleObserver, private t9::NonCopyable {
@@ -100,13 +108,16 @@ class HandleStorage : private HandleObserver, private t9::NonCopyable {
     return Handle<T>(HandleId{entry.revision, index}, this);
   }
 
-  void update() {
+  void update(HandleRemoveObserver<T>* observer = nullptr) {
     sync::UniqueLock lock(remove_mutex_.get());
     for (auto id : remove_ids_) {
       assert(id.index < entries_.size());
       auto& entry = entries_[id.index];
       if (entry.revision != id.revision) continue;
       if (SDL_AtomicGet(&entry.ref_count) > 0) continue;
+      if (observer) {
+        observer->on_remove(entry.x.get());
+      }
       entry.revision = std::max<std::size_t>(entry.revision + 1, 1);
       entry.x.reset();
       index_stock_.emplace_back(id.index);
@@ -114,23 +125,31 @@ class HandleStorage : private HandleObserver, private t9::NonCopyable {
     remove_ids_.clear();
   }
 
-  const T* get(const Handle<T>& handle) const {
-    assert(handle.id.index < entries_.size());
-    auto& entry = entries_[handle.id.index];
-    if (handle.id.revision != entry.revision) return nullptr;
+  Handle<T> make_handle(HandleId id) {
+    assert(id.index < entries_.size());
+    auto& entry = entries_[id.index];
+    if (id.revision != entry.revision) return Handle<T>{};
+    SDL_AtomicSet(&entry.ref_count, 1);
+    return Handle<T>(id, this);
+  }
+
+  const T* get(const HandleId& id) const {
+    assert(id.index < entries_.size());
+    auto& entry = entries_[id.index];
+    if (id.revision != entry.revision) return nullptr;
     return entry.x.get();
   }
-  T* get_mut(const Handle<T>& handle) {
-    assert(handle.id.index < entries_.size());
-    auto& entry = entries_[handle.id.index];
-    if (handle.id.revision != entry.revision) return nullptr;
+  T* get_mut(const HandleId& id) {
+    assert(id.index < entries_.size());
+    auto& entry = entries_[id.index];
+    if (id.revision != entry.revision) return nullptr;
     return entry.x.get();
   }
 
-  bool exists(const Handle<T>& handle) const {
-    assert(handle.id.index < entries_.size());
+  bool exists(const HandleId& id) const {
+    assert(id.index < entries_.size());
     auto& entry = entries_[handle.id.index];
-    return handle.id.revision == entry.revision;
+    return id.revision == entry.revision;
   }
 
   template <typename F>

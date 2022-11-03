@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "debug/manager.h"
+#include "sai/asset/fwd.h"
 #include "sai/ecs/registry.h"
 #include "sai/graphics/sprite.h"
 #include "sai/input/mouse.h"
@@ -112,7 +113,7 @@ void update_sprites(
     sai::ecs::Query<const MovementComponent&, SpriteComponent&> query,
     sai::graphics::SpriteStorage* sprites) {
   for (auto [mc, sc] : query) {
-    auto sprite = sprites->get_mut(sc.handle);
+    auto sprite = sprites->get_mut(sc.handle.id);
     sprite->rect.x = mc.x - RECT_SIZE / 2;
     sprite->rect.y = mc.y - RECT_SIZE / 2;
   }

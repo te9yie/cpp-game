@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "../asset/fwd.h"
 #include "../core/core.h"
 #include "../debug/gui.h"
 #include "../graphics/sprite.h"
@@ -25,6 +26,7 @@ App::App() {
   }
 
   preset(core::preset_core);
+  preset(asset::preset_asset);
   preset(preset_executor);
   preset(video::preset_video);
   preset(input::preset_input);
