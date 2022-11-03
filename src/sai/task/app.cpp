@@ -5,6 +5,7 @@
 #include "../asset/fwd.h"
 #include "../core/fwd.h"
 #include "../debug/fwd.h"
+#include "../ecs/registry.h"
 #include "../graphics/fwd.h"
 #include "../input/fwd.h"
 #include "../video/fwd.h"
@@ -16,14 +17,14 @@ namespace sai::task {
 
 App::App() {
   if (auto scheduler = add_context<Scheduler>()) {
-    scheduler->phases.emplace_back(make_phase<FirstPhase>("First"));
-    scheduler->phases.emplace_back(make_phase<PreUpdatePhase>("PreUpdate"));
-    scheduler->phases.emplace_back(make_phase<UpdatePhase>("Update"));
-    scheduler->phases.emplace_back(make_phase<PostUpdatePhase>("PostUpdate"));
-    scheduler->phases.emplace_back(make_phase<PreRenderPhase>("PreRender"));
-    scheduler->phases.emplace_back(make_phase<RenderPhase>("Render"));
-    scheduler->phases.emplace_back(make_phase<PostRenderPhase>("PostRender"));
-    scheduler->phases.emplace_back(make_phase<LastPhase>("Last"));
+    scheduler->add_phase(make_phase<FirstPhase>("First"));
+    scheduler->add_phase(make_phase<PreUpdatePhase>("PreUpdate"));
+    scheduler->add_phase(make_phase<UpdatePhase>("Update"));
+    scheduler->add_phase(make_phase<PostUpdatePhase>("PostUpdate"));
+    scheduler->add_phase(make_phase<PreRenderPhase>("PreRender"));
+    scheduler->add_phase(make_phase<RenderPhase>("Render"));
+    scheduler->add_phase(make_phase<PostRenderPhase>("PostRender"));
+    scheduler->add_phase(make_phase<LastPhase>("Last"));
   }
 
   preset(core::preset_core);
@@ -33,6 +34,7 @@ App::App() {
   preset(input::preset_input);
   preset(graphics::preset_graphics);
   preset(debug::preset_debug_gui);
+  add_context<ecs::Registry>();
 }
 
 bool App::run() {

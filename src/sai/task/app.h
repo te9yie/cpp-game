@@ -7,6 +7,7 @@
 #include "context.h"
 #include "event.h"
 #include "phase.h"
+#include "scheduler.h"
 #include "setup_task.h"
 #include "t9/func_traits.h"
 #include "t9/noncopyable.h"
@@ -38,6 +39,18 @@ class App : private t9::NonCopyable {
   void add_event() {
     add_context<Event<T>>();
     add_task_in_phase<FirstPhase>("update events", update_events<T>);
+  }
+
+  template <typename T>
+  void add_phase_before(std::unique_ptr<Phase> phase) {
+    auto sch = context_.get<Scheduler>();
+    sch->add_phase_before<T>(std::move(phase));
+  }
+
+  template <typename T>
+  void add_phase(std::unique_ptr<Phase> phase) {
+    auto sch = context_.get<Scheduler>();
+    sch->add_phase<T>(std::move(phase));
   }
 
   template <typename F>

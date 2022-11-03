@@ -1,11 +1,14 @@
 #include "fwd.h"
 
 #include "../task/app.h"
+#include "../task/phase.h"
 #include "../video/video.h"
 #include "gui.h"
 #include "performance.h"
 
 namespace sai::debug {
+
+struct PerformanceTickPhase;
 
 void preset_debug_gui(task::App* app) {
   app->add_context<PerformanceProfiler>();
@@ -17,7 +20,10 @@ void preset_debug_gui(task::App* app) {
     return true;
   });
 
-  app->add_task_in_phase<task::FirstPhase>(
+  app->add_phase_before<task::FirstPhase>(
+      task::make_phase<PerformanceTickPhase>("PerformaceTick"));
+
+  app->add_task_in_phase<PerformanceTickPhase>(
       "performance tick",
       [](sai::debug::PerformanceProfiler* profiler) { profiler->tick(); });
   app->add_task_in_phase<task::PreUpdatePhase>("-- begin debug gui",

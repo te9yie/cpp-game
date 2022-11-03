@@ -5,7 +5,6 @@
 #include "debug/manager.h"
 #include "sai/asset/asset.h"
 #include "sai/asset/manager.h"
-#include "sai/ecs/registry.h"
 #include "sai/graphics/sprite.h"
 #include "sai/input/mouse.h"
 #include "sai/task/app.h"
@@ -179,7 +178,6 @@ void render_debug_gui(sai::debug::Gui*, const sai::input::MouseState* mouse,
 namespace game {
 
 void preset_game(sai::task::App* app) {
-  app->add_context<sai::ecs::Registry>();
   app->add_context<Font>();
   app->add_context<Score>();
 
