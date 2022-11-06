@@ -48,8 +48,7 @@ struct SpriteComponent {
 };
 
 bool setup_font(sai::asset::Manager* mgr, Font* font) {
-  // font->handle = mgr->load("assets/mplus_f12r.bmp");
-  mgr->load("assets/mplus_f12r.bmp");
+  font->handle = mgr->load("assets/mplus_f12r.bmp");
   return true;
 }
 

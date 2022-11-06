@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include "../asset/asset.h"
 #include "../handle.h"
 #include "../task/fwd.h"
 #include "../video/video.h"
@@ -21,7 +22,7 @@ struct Sprite {
 using SpriteHandle = Handle<Sprite>;
 using SpriteStorage = HandleStorage<Sprite>;
 
-void render_sprites(video::VideoSystem* sys, const SpriteStorage* sprites,
-                    const TextureStorage* textures);
+void render_sprites(video::VideoSystem* sys, const asset::AssetStorage* assets,
+                    SpriteStorage* sprites, const TextureStorage* textures);
 
 }  // namespace sai::graphics

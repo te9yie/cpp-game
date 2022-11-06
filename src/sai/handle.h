@@ -142,7 +142,7 @@ class HandleStorage : private HandleObserver, private t9::NonCopyable {
     if (id.revision != entry.revision) return nullptr;
     return entry.x.get();
   }
-  T* get_mut(const HandleId& id) {
+  T* get_mut(const HandleId& id) const {
     assert(id.index < entries_.size());
     auto& entry = entries_[id.index];
     if (id.revision != entry.revision) return nullptr;

@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include "../asset/asset.h"
 #include "../handle.h"
 
 namespace sai::graphics {
@@ -19,6 +20,7 @@ TexturePtr create_texture(SDL_Renderer* r, const std::uint8_t* data,
 
 // Texture.
 struct Texture {
+  asset::AssetHandle handle;
   TexturePtr texture;
 };
 
