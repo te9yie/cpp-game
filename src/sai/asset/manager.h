@@ -9,17 +9,17 @@
 namespace sai::asset {
 
 // Manager.
-class Manager : private t9::NonCopyable, private AssetRemoveObserver {
+class Manager : private t9::NonCopyable, public AssetRemoveObserver {
  private:
   using PathMap = std::unordered_multimap<std::uint32_t, HandleId>;
 
  private:
-  AssetStorage assets_;
+  AssetStorage* assets_ = nullptr;
   PathMap path_map_;
   job::Executor executor_;
 
  public:
-  Manager();
+  Manager(AssetStorage* assets);
 
   bool start();
   void stop();
@@ -27,14 +27,12 @@ class Manager : private t9::NonCopyable, private AssetRemoveObserver {
   AssetHandle load(std::string_view path);
   AssetHandle find(std::string_view path);
 
-  void update();
-
- private:
+ public:
   // AssetRemoveObserver.
   virtual void on_remove(HandleId id, std::shared_ptr<Asset> asset) override;
 };
 
 bool init_manager(Manager* manager);
-void update_manager(Manager* manager);
+void update_manager(Manager* manager, AssetStorage* storage);
 
 }  // namespace sai::asset

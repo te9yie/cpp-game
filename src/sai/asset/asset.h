@@ -1,8 +1,10 @@
 #pragma once
 #include <string>
+#include <vector>
 
 #include "../handle.h"
 #include "../job/job.h"
+#include "../task/event.h"
 
 namespace sai::asset {
 
@@ -15,6 +17,11 @@ struct Asset {
 
   Asset(std::string_view p) : path(p) {}
 };
+
+using AssetHandle = Handle<Asset>;
+using AssetEvent = HandleEvent<Asset>;
+using AssetRemoveObserver = HandleRemoveObserver<Asset>;
+using AssetStorage = HandleStorage<Asset>;
 
 // LoadAssetJob.
 class LoadAssetJob : public job::Job {
@@ -30,9 +37,5 @@ class LoadAssetJob : public job::Job {
 
 // load_asset.
 bool load_asset(Asset* a);
-
-using AssetHandle = Handle<Asset>;
-using AssetRemoveObserver = HandleRemoveObserver<Asset>;
-using AssetStorage = HandleStorage<Asset>;
 
 }  // namespace sai::asset

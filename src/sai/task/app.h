@@ -36,9 +36,9 @@ class App : private t9::NonCopyable {
   }
 
   template <typename T>
-  void add_event() {
-    add_context<Event<T>>();
+  Event<T>* add_event() {
     add_task_in_phase<FirstPhase>("update events", update_events<T>);
+    return add_context<Event<T>>();
   }
 
   template <typename T>
