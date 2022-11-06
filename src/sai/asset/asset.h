@@ -15,11 +15,10 @@ struct Asset {
   bool is_not_found = false;
   bool is_loaded = false;
 
-  Asset(std::string_view p) : path(p) {}
+  explicit Asset(std::string_view p) : path(p) {}
 };
 
 using AssetHandle = Handle<Asset>;
-using AssetEvent = HandleEvent<Asset>;
 using AssetRemoveObserver = HandleRemoveObserver<Asset>;
 using AssetStorage = HandleStorage<Asset>;
 

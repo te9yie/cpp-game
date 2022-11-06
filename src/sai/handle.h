@@ -10,7 +10,6 @@
 
 #include "sync/mutex.h"
 #include "t9/noncopyable.h"
-#include "task/event.h"
 
 namespace sai {
 
@@ -92,17 +91,6 @@ class HandleRemoveObserver {
   virtual void on_remove(HandleId id, std::shared_ptr<T> p) = 0;
 };
 
-// HandleEvent.
-template <typename T>
-struct HandleEvent {
-  enum class Event {
-    Create,
-    Destroy,
-  };
-  Event event;
-  HandleId id;
-};
-
 // HandleStorage
 template <typename T>
 class HandleStorage : private HandleObserver, private t9::NonCopyable {
@@ -112,22 +100,15 @@ class HandleStorage : private HandleObserver, private t9::NonCopyable {
   std::deque<HandleEntry<T>> entries_;
   std::deque<HandleId> remove_ids_;
   sync::MutexPtr remove_mutex_;
-  task::Event<HandleEvent<T>>* events_;
 
  public:
-  HandleStorage() = default;
-  explicit HandleStorage(task::Event<HandleEvent<T>>* e) : events_(e) {}
-
   Handle<T> add(std::shared_ptr<T> x) {
     auto index = find_index_();
     auto& entry = entries_[index];
     SDL_AtomicSet(&entry.ref_count, 1);
     entry.x = std::move(x);
     HandleId id{entry.revision, index};
-    if (events_) {
-      events_->notify(HandleEvent<T>{HandleEvent<T>::Event::Create, id});
-    }
-    return Handle<T>(HandleId{entry.revision, index}, this);
+    return Handle<T>(id, this);
   }
 
   void update(HandleRemoveObserver<T>* observer = nullptr) {
@@ -139,9 +120,6 @@ class HandleStorage : private HandleObserver, private t9::NonCopyable {
       if (SDL_AtomicGet(&entry.ref_count) > 0) continue;
       if (observer) {
         observer->on_remove(id, entry.x);
-      }
-      if (events_) {
-        events_->notify(HandleEvent<T>{HandleEvent<T>::Event::Destroy, id});
       }
       entry.revision = std::max<std::size_t>(entry.revision + 1, 1);
       entry.x.reset();

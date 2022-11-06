@@ -3,6 +3,7 @@
 #include <unordered_map>
 
 #include "../job/executor.h"
+#include "../task/args.h"
 #include "asset.h"
 #include "t9/noncopyable.h"
 
@@ -36,3 +37,19 @@ bool init_manager(Manager* manager);
 void update_manager(Manager* manager, AssetStorage* storage);
 
 }  // namespace sai::asset
+
+namespace sai::task {
+
+// arg_traits.
+template <>
+struct arg_traits<asset::Manager*> {
+  static void set_type_bits(ArgsTypeBits* bits) {
+    bits->set_write<asset::Manager>();
+    bits->set_write<asset::AssetStorage>();
+  }
+  static asset::Manager* to(const AppContext* ctx, TaskWork*) {
+    return ctx->get<asset::Manager>();
+  }
+};
+
+}  // namespace sai::task
