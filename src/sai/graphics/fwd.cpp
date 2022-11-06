@@ -7,8 +7,8 @@
 namespace sai::graphics {
 
 void preset_graphics(task::App* app) {
-  app->add_context<SpriteStorage>();
   app->add_context<TextureStorage>();
+  app->add_context<SpriteStorage>();
   app->add_task_in_phase<task::FirstPhase>(
       "update sprites", [](SpriteStorage* s) { s->update(); });
   app->add_task_in_phase<task::FirstPhase>(

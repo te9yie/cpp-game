@@ -6,6 +6,7 @@
 #include "sai/asset/asset.h"
 #include "sai/asset/manager.h"
 #include "sai/graphics/sprite.h"
+#include "sai/graphics/texture.h"
 #include "sai/input/mouse.h"
 #include "sai/task/app.h"
 
@@ -30,6 +31,7 @@ struct RectEvent {
 
 struct Font {
   sai::asset::AssetHandle handle;
+  sai::graphics::SpriteHandle sprite;
 };
 
 struct Score {
@@ -47,8 +49,19 @@ struct SpriteComponent {
   sai::graphics::SpriteHandle handle;
 };
 
-bool setup_font(sai::asset::Manager* mgr, Font* font) {
+bool setup_font(sai::asset::Manager* mgr, Font* font,
+                sai::graphics::SpriteStorage* sprites,
+                sai::graphics::TextureStorage* textures) {
   font->handle = mgr->load("assets/mplus_f12r.bmp");
+
+  auto sprite = std::make_shared<sai::graphics::Sprite>();
+  auto texture = std::make_shared<sai::graphics::Texture>();
+  texture->handle = font->handle;
+  sprite->rect = SDL_Rect{100, 100, 128, 128};
+  sprite->material.texture_uv = SDL_Rect{0, 0, 128, 128};
+  sprite->material.texture = textures->add(std::move(texture));
+  font->sprite = sprites->add(std::move(sprite));
+
   return true;
 }
 
