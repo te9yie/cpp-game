@@ -1,6 +1,7 @@
 #include "sprite.h"
 
 #include "../task/app.h"
+#include "surface.h"
 
 namespace sai::graphics {
 
@@ -16,12 +17,15 @@ void render_sprite(SDL_Renderer* r, const asset::AssetStorage* assets,
       if (!t->texture) {
         auto asset = assets->get(t->handle.id);
         if (asset->is_loaded) {
-          t->texture =
-              create_texture(r, asset->data.data(), asset->data.size());
+          auto surface = create_surface(asset->data.data(), asset->data.size());
+          t->texture = create_texture(r, surface.get());
         }
       }
       if (t->texture) {
-        SDL_RenderCopy(r, t->texture.get(), &m.texture_uv, &s->rect);
+        const SDL_Rect* src = (m.texture_uv.w > 0 && m.texture_uv.h > 0)
+                                  ? &m.texture_uv
+                                  : nullptr;
+        SDL_RenderCopy(r, t->texture.get(), src, &s->rect);
       }
     } else {
       SDL_RenderFillRect(r, &s->rect);

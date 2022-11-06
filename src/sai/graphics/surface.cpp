@@ -1,5 +1,7 @@
 #include "surface.h"
 
+#include <SDL_image.h>
+
 namespace sai::graphics {
 
 // create_surface.
@@ -10,7 +12,7 @@ SurfacePtr create_surface(const std::uint8_t* data, std::size_t size) {
     SDL_LogError(SDL_LOG_CATEGORY_VIDEO, "error: %s", SDL_GetError());
     return nullptr;
   }
-  auto s = SDL_LoadBMP_RW(rw, SDL_TRUE);
+  auto s = IMG_Load_RW(rw, SDL_TRUE);
   if (!rw) {
     SDL_LogError(SDL_LOG_CATEGORY_VIDEO, "error: %s", SDL_GetError());
     return nullptr;

@@ -7,10 +7,17 @@ include(FetchContent)
 
 # SDL
 FetchContent_Declare(
-    sdl
+    SDL
     GIT_REPOSITORY https://github.com/libsdl-org/SDL
     GIT_TAG release-2.24.1)
-FetchContent_MakeAvailable(sdl)
+FetchContent_MakeAvailable(SDL)
+
+# SDL_image
+FetchContent_Declare(
+    SDL_image
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL_image
+    GIT_TAG release-2.6.2)
+FetchContent_MakeAvailable(SDL_image)
 
 # imgui
 FetchContent_Declare(
@@ -74,7 +81,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/src)
 target_include_directories(${PROJECT_NAME} PRIVATE ${imgui_SOURCE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${imgui_SOURCE_DIR}/backends)
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2 SDL2::SDL2main)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL2_image::SDL2_image SDL2::SDL2 SDL2::SDL2main)
 
 if (MSVC)
     add_custom_command(
@@ -82,6 +89,13 @@ if (MSVC)
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:SDL2::SDL2>
+        $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>
+        VERBATIM)
+    add_custom_command(
+        TARGET ${PROJECT_NAME}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:SDL2_image::SDL2_image>
         $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>
         VERBATIM)
 endif()

@@ -5,6 +5,7 @@
 #include "debug/manager.h"
 #include "sai/asset/asset.h"
 #include "sai/asset/manager.h"
+#include "sai/graphics/font.h"
 #include "sai/graphics/sprite.h"
 #include "sai/graphics/texture.h"
 #include "sai/input/mouse.h"
@@ -29,11 +30,6 @@ struct RectEvent {
   sai::ecs::EntityId id;
 };
 
-struct Font {
-  sai::asset::AssetHandle handle;
-  sai::graphics::SpriteHandle sprite;
-};
-
 struct Score {
   int score = 0;
 };
@@ -49,20 +45,19 @@ struct SpriteComponent {
   sai::graphics::SpriteHandle handle;
 };
 
-bool setup_font(sai::asset::Manager* mgr, Font* font,
-                sai::graphics::SpriteStorage* sprites,
+bool setup_font(sai::asset::Manager* mgr, sai::graphics::Font* font,
                 sai::graphics::TextureStorage* textures) {
-  font->handle = mgr->load("assets/mplus_f12r.bmp");
-
-  auto sprite = std::make_shared<sai::graphics::Sprite>();
   auto texture = std::make_shared<sai::graphics::Texture>();
-  texture->handle = font->handle;
-  sprite->rect = SDL_Rect{100, 100, 128, 128};
-  sprite->material.texture_uv = SDL_Rect{0, 0, 128, 128};
-  sprite->material.texture = textures->add(std::move(texture));
-  font->sprite = sprites->add(std::move(sprite));
-
+  texture->handle = mgr->load("assets/mplus_f12r.png");
+  font->texture_handle = textures->add(std::move(texture));
   return true;
+}
+
+void render_texts(sai::video::VideoSystem* sys,
+                  const sai::asset::AssetStorage* assets,
+                  const sai::graphics::TextureStorage* textures,
+                  const sai::graphics::Font* font) {
+  sai::graphics::render_font(sys, assets, textures, font, 10, 100, "Hello");
 }
 
 bool setup_rects(sai::task::EventWriter<RectEvent> writer) {
@@ -191,7 +186,7 @@ void render_debug_gui(sai::debug::Gui*, const sai::input::MouseState* mouse,
 namespace game {
 
 void preset_game(sai::task::App* app) {
-  app->add_context<Font>();
+  app->add_context<sai::graphics::Font>();
   app->add_context<Score>();
 
   app->add_event<RectEvent>();
@@ -204,6 +199,8 @@ void preset_game(sai::task::App* app) {
   app->add_task("update sprites", update_sprites);
   app->add_task("click check", click_check);
   app->add_task("render debug gui -main-", render_debug_gui);
+
+  app->add_task_in_phase<sai::task::RenderPhase>("render texts", render_texts);
 
   app->preset(debug::preset_debug);
 }

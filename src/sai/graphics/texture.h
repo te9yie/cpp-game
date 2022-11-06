@@ -15,8 +15,7 @@ struct DestroyTexture {
 using TexturePtr = std::unique_ptr<SDL_Texture, DestroyTexture>;
 
 // create_texture.
-TexturePtr create_texture(SDL_Renderer* r, const std::uint8_t* data,
-                          std::size_t size);
+TexturePtr create_texture(SDL_Renderer* r, SDL_Surface* s);
 
 // Texture.
 struct Texture {
