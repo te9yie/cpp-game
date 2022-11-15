@@ -56,8 +56,12 @@ bool setup_font(sai::asset::Manager* mgr, sai::graphics::Font* font,
 void render_texts(sai::video::VideoSystem* sys,
                   const sai::asset::AssetStorage* assets,
                   const sai::graphics::TextureStorage* textures,
-                  const sai::graphics::Font* font) {
-  sai::graphics::render_font(sys, assets, textures, font, 10, 100, "Hello");
+                  const sai::graphics::Font* font, const Score* score) {
+  sai::graphics::render_font(sys, assets, textures, font, 10, 100,
+                             "the quick brown fox jumps over the lazy dog");
+  char buf[1024];
+  SDL_snprintf(buf, sizeof(buf), "SCORE: %d", score->score);
+  sai::graphics::render_font(sys, assets, textures, font, 10, 20, buf);
 }
 
 bool setup_rects(sai::task::EventWriter<RectEvent> writer) {

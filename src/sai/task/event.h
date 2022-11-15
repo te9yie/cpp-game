@@ -26,17 +26,18 @@ class Event {
   };
 
  private:
-  std::array<std::vector<std::unique_ptr<EventData<T>>>, 2> events_;
-  std::array<std::size_t, 2> start_index_ = {0};
+  static constexpr std::size_t FRAME_N = 2;
+  std::array<std::vector<std::unique_ptr<EventData<T>>>, FRAME_N> events_;
+  std::array<std::size_t, FRAME_N> start_index_ = {0};
   std::size_t count_ = 0;
-  std::size_t index_ = 0;
+  std::size_t frame_index_ = 0;
 
  public:
   virtual void update() {
-    auto index = 1 - index_;
+    auto index = (frame_index_ + 1) % FRAME_N;
     events_[index].clear();
     start_index_[index] = count_;
-    index_ = index;
+    frame_index_ = index;
   }
 
  public:
@@ -44,25 +45,21 @@ class Event {
   void notify(Args&&... args) {
     auto e =
         std::make_unique<EventData<T>>(count_++, std::forward<Args>(args)...);
-    events_[index_].emplace_back(std::move(e));
+    events_[frame_index_].emplace_back(std::move(e));
   }
 
   const EventData<T>* get_event(std::size_t index) const {
-    const auto n = count_ - index;
+    auto n = count_ - index;
     if (n == 0) return nullptr;
-    if (n <= events_[index_].size()) {
-      const auto i = index - start_index_[index_];
-      return events_[index_][i].get();
-    } else {
-      auto last_index = 1 - index_;
-      auto i = index - start_index_[last_index];
-      const auto& data = events_[last_index];
-      if (i < data.size()) {
-        return data[i].get();
-      } else if (!data.empty()) {
-        return data[0].get();
+    auto f_i = frame_index_;
+    do {
+      if (n <= events_[f_i].size()) {
+        auto i = index - start_index_[f_i];
+        return events_[f_i][i].get();
       }
-    }
+      n -= events_[f_i].size();
+      f_i = (f_i + FRAME_N - 1) % FRAME_N;
+    } while (f_i != frame_index_);
     return nullptr;
   }
 };
@@ -82,34 +79,31 @@ struct EventObserver {
 // EventWriter.
 template <typename T>
 struct EventWriter {
-  Event<T>* subject = nullptr;
+  Event<T>* event = nullptr;
 
-  EventWriter(const AppContext* ctx) : subject(ctx->get<Event<T>>()) {}
+  EventWriter(const AppContext* ctx) : event(ctx->get<Event<T>>()) {}
 
   template <class... Args>
   void notify(Args&&... args) {
-    assert(subject);
-    subject->notify<Args...>(std::forward<Args>(args)...);
+    assert(event);
+    event->notify<Args...>(std::forward<Args>(args)...);
   }
 };
 
 // EventReader.
 template <typename T>
 struct EventReader {
- private:
-  Event<T>* subject_ = nullptr;
-  std::size_t* index_ = nullptr;
+  Event<T>* event = nullptr;
+  std::size_t* index = nullptr;
 
- public:
   EventReader(const AppContext* ctx, std::size_t* i)
-      : subject_(ctx->get<Event<T>>()), index_(i) {}
+      : event(ctx->get<Event<T>>()), index(i) {}
 
   template <typename F>
   void each(F f) {
-    assert(subject_);
-    for (auto e = subject_->get_event(*index_); e;
-         e = subject_->get_event(*index_)) {
-      *index_ = e->index + 1;
+    assert(event);
+    for (auto e = event->get_event(*index); e; e = event->get_event(*index)) {
+      *index = e->index + 1;
       f(e->x);
     }
   }

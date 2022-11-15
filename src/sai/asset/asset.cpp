@@ -17,14 +17,16 @@ bool load_asset(Asset* a) {
     a->is_not_found = true;
     return false;
   }
-  auto len = SDL_RWseek(file, 0, RW_SEEK_END);
-  a->data.resize(len);
-  SDL_RWseek(file, 0, RW_SEEK_SET);
-  SDL_RWread(file, a->data.data(), len, 1);
-  SDL_RWclose(file);
+  auto size = SDL_RWsize(file);
+  a->data.resize(size);
+  Sint64 total = 0;
+  while (total < size) {
+    auto n = SDL_RWread(file, a->data.data() + total, 1, size - total);
+    if (n == 0) break;
+    total += n;
+  }
   a->is_loaded = true;
-
-  return true;
+  return total == size;
 }
 
 }  // namespace sai::asset
